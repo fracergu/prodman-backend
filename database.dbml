@@ -1,52 +1,23 @@
-Table Administrator {
+Table Users {
   id int [pk, increment]
   email varchar [unique, not null]
   name varchar [not null]
   last_name varchar
   password varchar [not null]
+  role varchar [not null]
 }
 
-Table AdministratorLogs {
-  id int [pk, increment]
-  administrator int [ref: > Administrator.id]
-  action varchar [not null]
-  date datetime [not null]
-}
-
-Table Worker {
-  id int [pk, increment]
-  email varchar [unique, not null]
-  name varchar [not null]
-  last_name varchar
-  password varchar [not null]
-}
-
-Table WorkerLogs {
-  id int [pk, increment]
-  worker int [ref: > Worker.id]
-  action varchar [not null]
-  date datetime [not null]
-}
-
-Table Product {
+Table Products {
   id int [pk, increment]
   name varchar [not null]
   description text
   price decimal [not null]
-  stock int [not null]
   image varchar
   created_at datetime [not null]
   updated_at datetime [not null]
 }
 
-Table ProductLogs {
-  id int [pk, increment]
-  product int [ref: > Product.id]
-  action varchar [not null]
-  date datetime [not null]
-}
-
-Table Category {
+Table Categories {
   id int [pk, increment]
   name varchar [not null]
   description text
@@ -54,53 +25,47 @@ Table Category {
 
 Table ProductCategories {
   id int [pk, increment]
-  product int [ref: > Product.id]
-  category int [ref: > Category.id]
+  product int [ref: > Products.id]
+  category int [ref: > Categories.id]
 }
 
-Table Stock {
+Table StockMovements {
   id int [pk, increment]
-  product int [ref: > Product.id]
+  product int [ref: > Products.id]
   quantity int [not null]
   date datetime [not null]
+  user int [ref: > Users.id]
 }
 
-Table StockLogs {
+Table Tasks {
   id int [pk, increment]
-  stock int [ref: > Stock.id]
-  action varchar [not null]
-  date datetime [not null]
-}
-
-Table ProductionTable {
-  id int [pk, increment]
+  worker int [ref: > Users.id]
   created_at datetime [not null]
+  notes text
+}
+
+Table SubTasks {
+  id int [pk, increment]
+  task int [ref: > Tasks.id]
+  product int [ref: > Products.id]
+  quantity int [not null]
   updated_at datetime [not null]
+  status varchar [not null]
+  notes text
 }
 
-Table ProductionTableLogs {
+Table SubTaskEvents {
   id int [pk, increment]
-  production_table int [ref: > ProductionTable.id]
-  action varchar [not null]
+  subtask int [ref: > SubTasks.id]
   date datetime [not null]
+  quantity_completed int [not null]
 }
 
-
-Table Task {
+Table Logs {
   id int [pk, increment]
-  production_table int [ref: > ProductionTable.id]
-  worker int [ref: > Worker.id]
-  product int [ref: > Product.id]
-  quantity int [not null]
-  created_at datetime [not null]
-  start_time datetime
-  end_time datetime
-}
-
-Table TaskLogs {
-  id int [pk, increment]
-  task int [ref: > Task.id]
+  table_name varchar [not null]
+  row_id int [not null]
   action varchar [not null]
-  date datetime [not null]
-  time datetime
+  date datetime [not null] 
+  user int [ref: > Users.id]
 }
