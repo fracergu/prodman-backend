@@ -12,7 +12,7 @@
 To create the database, run the following command:
 
 ```bash
-docker run -d -p 5432:5432 --name prodman-db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=prodman_db postgres
+docker run -d -p 5432:5432 --name prodman_db -e POSTGRES_USER=user -e POSTGRES_PASSWORD=secret -e POSTGRES_DB=prodman_db postgres:15.3-alpine
 ```
 
 ### Installation

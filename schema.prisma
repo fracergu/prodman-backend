@@ -1,0 +1,97 @@
+datasource db {
+    provider = "postgresql"
+    url      = "postgresql://user:secret@localhost:5432/prodman_db"
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model User {
+    id             Int             @id @default(autoincrement())
+    email          String          @unique
+    name           String
+    lastName       String?
+    password       String
+    role           String
+    Tasks          Task[]
+    StockMovements StockMovement[]
+    Logs           Log[]
+}
+
+model Product {
+    id                Int               @id @default(autoincrement())
+    name              String
+    description       String?
+    price             Decimal
+    image             String?
+    createdAt         DateTime
+    updatedAt         DateTime
+    ProductCategories ProductCategory[]
+    StockMovements    StockMovement[]
+    SubTasks          SubTask[]
+}
+
+model Category {
+    id                Int               @id @default(autoincrement())
+    name              String
+    description       String?
+    ProductCategories ProductCategory[]
+}
+
+model ProductCategory {
+    id       Int      @id @default(autoincrement())
+    product  Int
+    category Int
+    Product  Product  @relation(fields: [product], references: [id])
+    Category Category @relation(fields: [category], references: [id])
+}
+
+model StockMovement {
+    id       Int      @id @default(autoincrement())
+    product  Int
+    quantity Int
+    date     DateTime
+    user     Int
+    User     User     @relation(fields: [user], references: [id])
+    Product  Product  @relation(fields: [product], references: [id])
+}
+
+model Task {
+    id        Int       @id @default(autoincrement())
+    worker    Int
+    createdAt DateTime
+    notes     String?
+    User      User      @relation(fields: [worker], references: [id])
+    SubTasks  SubTask[]
+}
+
+model SubTask {
+    id            Int            @id @default(autoincrement())
+    task          Int
+    product       Int
+    quantity      Int
+    status        String
+    notes         String?
+    Task          Task           @relation(fields: [task], references: [id])
+    Product       Product        @relation(fields: [product], references: [id])
+    SubTaskEvents SubTaskEvent[]
+}
+
+model SubTaskEvent {
+    id                Int      @id @default(autoincrement())
+    subtask           Int
+    date              DateTime
+    quantityCompleted Int
+    SubTask           SubTask  @relation(fields: [subtask], references: [id])
+}
+
+model Log {
+    id        Int      @id @default(autoincrement())
+    tableName String
+    rowId     Int
+    action    String
+    date      DateTime
+    user      Int
+    User      User     @relation(fields: [user], references: [id])
+}
