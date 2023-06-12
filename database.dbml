@@ -49,7 +49,6 @@ Table SubTasks {
   task int [ref: > Tasks.id]
   product int [ref: > Products.id]
   quantity int [not null]
-  updated_at datetime [not null]
   status varchar [not null]
   notes text
 }
