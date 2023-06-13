@@ -1,4 +1,4 @@
-import { login, register } from '@controllers/auth.controller'
+import { login, logout, register } from '@controllers/auth.controller'
 import { PrismaClient } from '@prisma/client'
 import { type Context } from '@utils/context'
 import express from 'express'
@@ -13,7 +13,7 @@ const withContext = (fn: any) => {
     res: express.Response,
     next: express.NextFunction
   ) => {
-    fn(req, res, next, context)
+    fn(req, res, next, context).catch(next)
   }
 }
 
@@ -92,5 +92,18 @@ router.post('/login', withContext(login))
  *
  */
 router.post('/register', withContext(register))
+
+/**
+ * @openapi
+ * /auth/logout:
+ *   delete:
+ *     summary: Logout a user
+ *   responses:
+ *     200:
+ *       description: Successful operation
+ *     500:
+ *       description: Internal server error
+ */
+router.delete('/logout', withContext(logout))
 
 export default router

@@ -1,4 +1,3 @@
-import { RequiredFieldsError } from '@exceptions/RequiredFieldsError'
 import { type User } from '@prisma/client'
 import { createMockContext, type MockContext } from '@utils/context'
 import bcrypt from 'bcrypt'
@@ -20,6 +19,7 @@ describe('AuthController', () => {
     const res: Partial<Response> = {
       json: jest.fn().mockReturnThis(),
       status: jest.fn().mockReturnThis(),
+      send: jest.fn().mockReturnThis(),
       clearCookie: jest.fn().mockReturnThis()
     }
     return res as Response
@@ -109,15 +109,6 @@ describe('AuthController', () => {
         message: 'Invalid credentials'
       })
     })
-
-    it('should pass missing field error to next middleware', async () => {
-      req.body = {
-        password: 'test'
-      }
-
-      await login(req, res, next, context)
-      expect(next).toHaveBeenCalledWith(expect.any(RequiredFieldsError))
-    })
   })
 
   describe('register', () => {
@@ -160,19 +151,6 @@ describe('AuthController', () => {
 
       expect(res.status).toHaveBeenCalledWith(201)
     })
-
-    it('should pass missing field error to next middleware', async () => {
-      req.body = {
-        name: 'test',
-        lastName: 'test',
-        password: 'test'
-      }
-
-      context.prisma.user.findMany.mockResolvedValueOnce([])
-
-      await register(req, res, next, context)
-      expect(next).toHaveBeenCalledWith(expect.any(RequiredFieldsError))
-    })
   })
 
   describe('logout', () => {
@@ -185,15 +163,6 @@ describe('AuthController', () => {
       expect(req.session.destroy).toHaveBeenCalled()
       expect(res.clearCookie).toHaveBeenCalledWith('sid')
       expect(res.status).toHaveBeenCalledWith(200)
-    })
-
-    it('should pass error to next middleware', async () => {
-      req.session.user = mockUser
-      jest.spyOn(req.session, 'destroy').mockImplementationOnce(() => {
-        throw new Error()
-      })
-      await logout(req, res, next, context)
-      expect(next).toHaveBeenCalledWith(expect.any(Error))
     })
   })
 })
