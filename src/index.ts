@@ -1,4 +1,3 @@
-import { type User } from '@prisma/client'
 import authRoutes from '@routes/auth.routes'
 import { errorHandler } from '@utils/errorHandler'
 import genFunc from 'connect-pg-simple'
@@ -15,7 +14,7 @@ const port = process.env.PORT ?? 3000
 
 declare module 'express-session' {
   interface SessionData {
-    user: Partial<User>
+    user: number
   }
 }
 

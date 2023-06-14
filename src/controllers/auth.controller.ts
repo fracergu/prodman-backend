@@ -12,16 +12,24 @@ export const login = async (
 ): Promise<void> => {
   checkRequiredFields(['email', 'password'], req.body)
   const { email, password, rememberMe } = req.body as LoginBody
-  const user = await ctx.prisma.user.findUnique({ where: { email } })
-  if (user !== null && bcrypt.compareSync(password, user.password)) {
-    if (rememberMe) {
-      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30 // 30 days
-    }
-    req.session.user = user
-    res.status(200).send()
-  } else {
-    res.status(401).json({ status: 'error', message: 'Invalid credentials' })
-  }
+  ctx.prisma.user
+    .findUnique({ where: { email } })
+    .then(user => {
+      if (user !== null && bcrypt.compareSync(password, user.password)) {
+        if (rememberMe) {
+          req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30 // 30 days
+        }
+        req.session.user = user.id
+        res.status(200).send()
+      } else {
+        res
+          .status(401)
+          .json({ status: 'error', message: 'Invalid credentials' })
+      }
+    })
+    .catch(() => {
+      res.status(500).json({ status: 'error', message: 'Something went wrong' })
+    })
 }
 
 export const register = async (
@@ -42,17 +50,22 @@ export const register = async (
   checkRequiredFields(['name', 'email', 'password'], req.body)
   const { name, email, lastName, password } = req.body as RegisterBody
   const hashedPassword = bcrypt.hashSync(password, 8)
-  const user = await ctx.prisma.user.create({
-    data: {
-      name,
-      lastName,
-      email,
-      password: hashedPassword,
-      role: 'ADMIN'
-    }
-  })
-  req.session.user = user
-  res.status(201).send()
+  ctx.prisma.user
+    .create({
+      data: {
+        name,
+        lastName,
+        email,
+        password: hashedPassword,
+        role: 'ADMIN'
+      }
+    })
+    .then(() => {
+      res.status(201).send()
+    })
+    .catch(() => {
+      res.status(500).json({ status: 'error', message: 'Something went wrong' })
+    })
 }
 
 export const logout = async (
