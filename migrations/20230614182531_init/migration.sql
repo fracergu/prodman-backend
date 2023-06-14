@@ -96,6 +96,15 @@ CREATE TABLE "Log" (
     CONSTRAINT "Log_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "session" (
+    "sid" TEXT NOT NULL,
+    "sess" TEXT NOT NULL,
+    "expire" TIMESTAMP(3),
+
+    CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 

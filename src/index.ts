@@ -1,6 +1,7 @@
 import { type User } from '@prisma/client'
 import authRoutes from '@routes/auth.routes'
 import { errorHandler } from '@utils/errorHandler'
+import genFunc from 'connect-pg-simple'
 import dotenv from 'dotenv'
 import express, { type Express } from 'express'
 import session from 'express-session'
@@ -18,12 +19,18 @@ declare module 'express-session' {
   }
 }
 
+const PostgreslqStore = genFunc(session)
+const sessionStore = new PostgreslqStore({
+  conString: process.env.DATABASE_URL
+})
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET ?? 'secret',
     resave: false,
     saveUninitialized: true,
-    cookie: { httpOnly: true }
+    cookie: { httpOnly: true },
+    store: sessionStore
   })
 )
 

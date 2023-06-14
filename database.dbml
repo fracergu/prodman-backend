@@ -68,3 +68,9 @@ Table Logs {
   date datetime [not null] 
   user int [ref: > Users.id]
 }
+
+Table session {
+  sid varchar [pk]
+  sess json [not null]
+  expire datetime
+}

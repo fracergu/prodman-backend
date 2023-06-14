@@ -1,6 +1,6 @@
 datasource db {
     provider = "postgresql"
-    url      = "postgresql://user:secret@localhost:5432/prodman_db"
+    url      = env("DATABASE_URL")
 }
 
 generator client {
@@ -94,4 +94,10 @@ model Log {
     date      DateTime
     user      Int
     User      User     @relation(fields: [user], references: [id])
+}
+
+model session {
+    sid    String    @id @default(cuid())
+    sess   String
+    expire DateTime?
 }
