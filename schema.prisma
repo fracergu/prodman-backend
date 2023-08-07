@@ -20,16 +20,27 @@ model User {
 }
 
 model Product {
-    id                Int               @id @default(autoincrement())
-    name              String
-    description       String?
-    price             Decimal
-    image             String?
-    createdAt         DateTime
-    updatedAt         DateTime
-    ProductCategories ProductCategory[]
-    StockMovements    StockMovement[]
-    SubTasks          SubTask[]
+    id                  Int                @id @default(autoincrement())
+    name                String
+    description         String?
+    price               Decimal
+    image               String?
+    createdAt           DateTime
+    updatedAt           DateTime
+    ProductCategories   ProductCategory[]
+    StockMovements      StockMovement[]
+    SubTasks            SubTask[]
+    ProductComponents   ProductComponent[] @relation("ParentProduct")
+    ComponentOfProducts ProductComponent[] @relation("ChildProduct")
+}
+
+model ProductComponent {
+    id            Int     @id @default(autoincrement())
+    parentProduct Int
+    childProduct  Int
+    quantity      Int
+    Parent        Product @relation("ParentProduct", fields: [parentProduct], references: [id])
+    Child         Product @relation("ChildProduct", fields: [childProduct], references: [id])
 }
 
 model Category {
