@@ -35,7 +35,8 @@ describe('AuthController', () => {
       session: {
         cookie: {},
         destroy: jest.fn(callback => callback())
-      } as any
+      } as any,
+      headers: {}
     })
     res = mockResponse()
     next = mockNext()
@@ -55,37 +56,78 @@ describe('AuthController', () => {
   }
 
   describe('login', () => {
+    const base64Credentials = btoa(`${mockUser.email}:test`)
+
     it('should login a user and set session', async () => {
-      req.body = {
-        email: mockUser.email,
-        password: 'test',
-        rememberMe: true
-      }
+      req.headers.authorization = `Basic ${base64Credentials}`
+      req.body = { rememberMe: true }
       context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
       await login(req, res, next, context)
       expect(res.status).toHaveBeenCalledWith(200)
-      expect(req.session.user).toEqual(mockUser)
+      expect(req.session.user).toEqual(mockUser.id)
     })
 
-    it('should set session cookie maxAge to 30 days if rememberMe is true', async () => {
-      req.body = {
-        email: mockUser.email,
-        password: 'test',
-        rememberMe: true
+    describe('user is admin', () => {
+      it('should set session cookie maxAge to 30 days if rememberMe is true', async () => {
+        req.headers.authorization = `Basic ${base64Credentials}`
+        req.body = { rememberMe: true }
+        context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
+        await login(req, res, next, context)
+        expect(res.status).toHaveBeenCalledWith(200)
+        expect(req.session.cookie.maxAge).toEqual(1000 * 60 * 60 * 24 * 30)
+        expect(req.session.user).toEqual(mockUser.id)
+      })
+
+      it('should set session cookie maxAge to 1 day if rememberMe is false', async () => {
+        req.headers.authorization = `Basic ${base64Credentials}`
+        req.body = { rememberMe: false }
+        context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
+        await login(req, res, next, context)
+        expect(res.status).toHaveBeenCalledWith(200)
+        expect(req.session.cookie.maxAge).toEqual(1000 * 60 * 60 * 24)
+        expect(req.session.user).toEqual(mockUser.id)
+      })
+    })
+
+    describe('user is not admin', () => {
+      const user: User = {
+        ...mockUser,
+        role: 'USER'
       }
-      context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
+
+      it('should set session cookie maxAge to 1 minute', async () => {
+        req.headers.authorization = `Basic ${base64Credentials}`
+        req.body = { rememberMe: true }
+        context.prisma.user.findUnique.mockResolvedValueOnce(user)
+        await login(req, res, next, context)
+        expect(res.status).toHaveBeenCalledWith(200)
+        expect(req.session.cookie.maxAge).toEqual(1000 * 60)
+        expect(req.session.user).toEqual(user.id)
+      })
+    })
+
+    it('should return 401 if authorization header is missing', async () => {
       await login(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(200)
-      expect(req.session.cookie.maxAge).toEqual(1000 * 60 * 60 * 24 * 30)
-      expect(req.session.user).toEqual(mockUser)
+      expect(res.status).toHaveBeenCalledWith(401)
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Missing or invalid authorization header'
+      })
+    })
+
+    it('should return 401 if authorization header is invalid', async () => {
+      req.headers.authorization = `Basic ${btoa('invalid')}`
+      await login(req, res, next, context)
+      expect(res.status).toHaveBeenCalledWith(401)
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Missing or invalid authorization header'
+      })
     })
 
     it('should return 401 if user is not found', async () => {
-      req.body = {
-        email: mockUser.email,
-        password: 'test',
-        rememberMe: true
-      }
+      req.headers.authorization = `Basic ${base64Credentials}`
+      req.body = { rememberMe: true }
       context.prisma.user.findUnique.mockResolvedValueOnce(null)
       await login(req, res, next, context)
       expect(res.status).toHaveBeenCalledWith(401)
@@ -96,11 +138,9 @@ describe('AuthController', () => {
     })
 
     it('should return 401 if password is incorrect', async () => {
-      req.body = {
-        email: mockUser.email,
-        password: 'wrongPassword',
-        rememberMe: true
-      }
+      const wrongBase64Credentials = btoa(`${mockUser.email}:wrongPassword`)
+      req.headers.authorization = `Basic ${wrongBase64Credentials}`
+      req.body = { rememberMe: true }
       context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
       await login(req, res, next, context)
       expect(res.status).toHaveBeenCalledWith(401)
@@ -130,6 +170,7 @@ describe('AuthController', () => {
 
     it('should create a new user', async () => {
       context.prisma.user.findMany.mockResolvedValueOnce([])
+      context.prisma.user.create.mockResolvedValueOnce(mockUser)
       req.body = {
         name: 'test',
         lastName: 'test',
@@ -155,7 +196,7 @@ describe('AuthController', () => {
 
   describe('logout', () => {
     it('should logout a user', async () => {
-      req.session.user = mockUser
+      req.session.user = mockUser.id
       jest.spyOn(req.session, 'destroy')
       jest.spyOn(res, 'clearCookie')
       jest.spyOn(res, 'status')

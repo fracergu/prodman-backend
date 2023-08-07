@@ -23,7 +23,11 @@ const router = express.Router()
  * @openapi
  * /auth/login:
  *   post:
+ *     tags:
+ *       - auth
  *     summary: Login a user
+ *     security:
+ *     - basicAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -31,14 +35,6 @@ const router = express.Router()
  *           schema:
  *             type: object
  *             properties:
- *               email:
- *                 type: string
- *                 description: The user's email
- *                 example: johndoe@example.com
- *               password:
- *                 type: string
- *                 description: The user's password
- *                 example: Very$ecureP@ssword
  *               rememberMe:
  *                 type: boolean
  *                 description: Whether to remember the user or not
@@ -57,6 +53,8 @@ router.post('/login', withContext(login))
  * @openapi
  * /auth/register:
  *   post:
+ *     tags:
+ *       - auth
  *     summary: Register a new user
  *     requestBody:
  *       required: true
@@ -97,6 +95,8 @@ router.post('/register', withContext(register))
  * @openapi
  * /auth/logout:
  *   delete:
+ *     tags:
+ *       - auth
  *     summary: Logout a user
  *   responses:
  *     200:

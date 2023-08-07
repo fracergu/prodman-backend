@@ -1,4 +1,12 @@
 -- CreateTable
+CREATE TABLE "Config" (
+    "key" TEXT NOT NULL,
+    "value" TEXT NOT NULL,
+
+    CONSTRAINT "Config_pkey" PRIMARY KEY ("key")
+);
+
+-- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,

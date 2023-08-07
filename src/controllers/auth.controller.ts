@@ -1,8 +1,10 @@
-import { type LoginBody, type RegisterBody } from '@models/auth.model'
+import { type RegisterBody } from '@models/auth.model'
 import { type Context } from '@utils/context'
 import { checkRequiredFields } from '@utils/validationUtils'
 import bcrypt from 'bcrypt'
 import { type NextFunction, type Request, type Response } from 'express'
+
+const ONE_DAY_MS = 1000 * 60 * 60 * 24
 
 export const login = async (
   req: Request,
@@ -10,14 +12,38 @@ export const login = async (
   next: NextFunction,
   ctx: Context
 ): Promise<void> => {
-  checkRequiredFields(['email', 'password'], req.body)
-  const { email, password, rememberMe } = req.body as LoginBody
+  const authHeader = req.headers.authorization
+
+  if (!authHeader || !authHeader.startsWith('Basic ')) {
+    res.status(401).json({
+      status: 'error',
+      message: 'Missing or invalid authorization header'
+    })
+    return
+  }
+
+  const base64Credentials = authHeader.split(' ')[1]
+  const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8')
+  const [email, password] = credentials.split(':')
+
+  if (!email || !password) {
+    res.status(401).json({
+      status: 'error',
+      message: 'Missing or invalid authorization header'
+    })
+    return
+  }
+
+  const rememberMe = req.body.rememberMe || false
+
   ctx.prisma.user
     .findUnique({ where: { email } })
     .then(user => {
       if (user !== null && bcrypt.compareSync(password, user.password)) {
-        if (rememberMe) {
-          req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30 // 30 days
+        if (user.role === 'ADMIN') {
+          req.session.cookie.maxAge = rememberMe ? ONE_DAY_MS * 30 : ONE_DAY_MS
+        } else if (user.role === 'USER') {
+          req.session.cookie.maxAge = 1000 * 60 // 1 minute
         }
         req.session.user = user.id
         res.status(200).send()
@@ -50,22 +76,22 @@ export const register = async (
   checkRequiredFields(['name', 'email', 'password'], req.body)
   const { name, email, lastName, password } = req.body as RegisterBody
   const hashedPassword = bcrypt.hashSync(password, 8)
-  ctx.prisma.user
-    .create({
-      data: {
-        name,
-        lastName,
-        email,
-        password: hashedPassword,
-        role: 'ADMIN'
-      }
-    })
-    .then(() => {
-      res.status(201).send()
-    })
-    .catch(() => {
-      res.status(500).json({ status: 'error', message: 'Something went wrong' })
-    })
+
+  const user = await ctx.prisma.user.create({
+    data: {
+      name,
+      lastName,
+      email,
+      password: hashedPassword,
+      role: 'ADMIN'
+    }
+  })
+
+  if (user) {
+    res.status(201).send()
+  } else {
+    res.status(500).json({ status: 'error', message: 'Something went wrong' })
+  }
 }
 
 export const logout = async (

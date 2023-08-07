@@ -5,7 +5,7 @@ import dotenv from 'dotenv'
 import express, { type Express } from 'express'
 import session from 'express-session'
 import swaggerJSDoc from 'swagger-jsdoc'
-import swaggerUi from 'swagger-ui-express'
+import swaggerUi, { JsonObject } from 'swagger-ui-express'
 
 dotenv.config()
 
@@ -42,7 +42,7 @@ app.use('/auth', authRoutes)
 // Error handler
 app.use(errorHandler)
 
-const options = {
+const options: JsonObject = {
   definition: {
     openapi: '3.0.0',
     info: {
@@ -50,6 +50,14 @@ const options = {
       version: '0.1.0',
       description:
         'This is the API documentation for Prodman, a production management tool.'
+    },
+    components: {
+      securitySchemes: {
+        basicAuth: {
+          type: 'http',
+          scheme: 'basic'
+        }
+      }
     }
   },
   apis: ['./src/routes/*.ts', './src/index.ts']
