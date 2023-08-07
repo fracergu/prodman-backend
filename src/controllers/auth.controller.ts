@@ -1,6 +1,6 @@
-import { type RegisterBody } from '@models/auth.model'
+import { LoginBody, type RegisterBody } from '@models/auth.model'
 import { type Context } from '@utils/context'
-import { checkRequiredFields } from '@utils/validationUtils'
+import { checkRequiredFields } from '@utils/validation'
 import bcrypt from 'bcrypt'
 import { type NextFunction, type Request, type Response } from 'express'
 
@@ -13,6 +13,7 @@ export const login = async (
   ctx: Context
 ): Promise<void> => {
   const authHeader = req.headers.authorization
+  const { rememberMe } = (req.body as LoginBody) || false
 
   if (!authHeader || !authHeader.startsWith('Basic ')) {
     res.status(401).json({
@@ -34,8 +35,6 @@ export const login = async (
     return
   }
 
-  const rememberMe = req.body.rememberMe || false
-
   ctx.prisma.user
     .findUnique({ where: { email } })
     .then(user => {
@@ -43,7 +42,7 @@ export const login = async (
         if (user.role === 'ADMIN') {
           req.session.cookie.maxAge = rememberMe ? ONE_DAY_MS * 30 : ONE_DAY_MS
         } else if (user.role === 'USER') {
-          req.session.cookie.maxAge = 1000 * 60 // 1 minute
+          req.session.cookie.maxAge = 1000 * 60
         }
         req.session.user = user.id
         res.status(200).send()
@@ -64,15 +63,6 @@ export const register = async (
   next: NextFunction,
   ctx: Context
 ): Promise<void> => {
-  const users = await ctx.prisma.user.findMany()
-  if (users.length > 0) {
-    res.status(403).json({
-      status: 'error',
-      message: 'Forbidden'
-    })
-    return
-  }
-
   checkRequiredFields(['name', 'email', 'password'], req.body)
   const { name, email, lastName, password } = req.body as RegisterBody
   const hashedPassword = bcrypt.hashSync(password, 8)

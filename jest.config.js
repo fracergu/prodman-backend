@@ -11,5 +11,5 @@ module.exports = {
   clearMocks: true,
   collectCoverage: true,
   coverageReporters: ['text', 'html'],
-  collectCoverageFrom: ['src/controllers/**/*.ts']
+  collectCoverageFrom: ['src/controllers/**/*.ts', 'src/middlewares/**/*.ts']
 }

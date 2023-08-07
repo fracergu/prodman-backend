@@ -152,22 +152,6 @@ describe('AuthController', () => {
   })
 
   describe('register', () => {
-    it('should return 403 if there is already a user in the database', async () => {
-      context.prisma.user.findMany.mockResolvedValueOnce([mockUser])
-      req.body = {
-        name: 'test',
-        lastName: 'test',
-        email: 'test@test.com',
-        password: 'test'
-      }
-      await register(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(403)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Forbidden'
-      })
-    })
-
     it('should create a new user', async () => {
       context.prisma.user.findMany.mockResolvedValueOnce([])
       context.prisma.user.create.mockResolvedValueOnce(mockUser)

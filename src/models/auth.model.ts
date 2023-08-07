@@ -1,6 +1,4 @@
 export interface LoginBody {
-  email: string
-  password: string
   rememberMe: boolean
 }
 

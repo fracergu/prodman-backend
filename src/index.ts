@@ -1,5 +1,7 @@
 import authRoutes from '@routes/auth.routes'
-import { errorHandler } from '@utils/errorHandler'
+import configRoutes from '@routes/config.routes'
+import { initializeDefaultConfigurations } from '@utils/initialConfig'
+import { errorHandler } from '@middlewares/error.middleware'
 import genFunc from 'connect-pg-simple'
 import dotenv from 'dotenv'
 import express, { type Express } from 'express'
@@ -38,6 +40,7 @@ app.use(express.urlencoded({ extended: true }))
 
 // Routes
 app.use('/auth', authRoutes)
+app.use('/config', configRoutes)
 
 // Error handler
 app.use(errorHandler)
@@ -66,7 +69,18 @@ const options: JsonObject = {
 const specs = swaggerJSDoc(options)
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs))
-
-app.listen(port, () => {
-  console.log(`⚡️[server]: Server is running at http://localhost:${port}`)
+app.get('/openapi', (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  res.send(specs)
 })
+
+initializeDefaultConfigurations()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`⚡️[server]: Server is running at http://localhost:${port}`)
+    })
+  })
+  .catch(err => {
+    console.error('Error initializing default configurations: ', err)
+    process.exit(1)
+  })

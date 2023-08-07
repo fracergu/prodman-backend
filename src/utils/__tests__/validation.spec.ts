@@ -1,5 +1,5 @@
 import { RequiredFieldsError } from '@exceptions/RequiredFieldsError'
-import { checkRequiredFields } from '@utils/validationUtils'
+import { checkRequiredFields } from '@utils/validation'
 
 describe('validationUtils', () => {
   describe('checkRequiredFields', () => {
