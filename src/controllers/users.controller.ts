@@ -1,3 +1,4 @@
+import { RequestError } from '@exceptions/RequestError'
 import {
   type UserCreationRequest,
   type UserCredentialsRequest,
@@ -5,11 +6,7 @@ import {
   type UserUpdateRequest
 } from '@models/users.model'
 import { type Context } from '@utils/context'
-import {
-  checkRequiredFields,
-  getIntegerParam,
-  isValidString
-} from '@utils/validation'
+import { getIntegerParam, isValidString } from '@utils/validation'
 import bcrypt from 'bcrypt'
 import { type NextFunction, type Request, type Response } from 'express'
 
@@ -44,32 +41,27 @@ export const getUsers = async (
     whereCriteria.role = role
   }
 
-  try {
-    const users: UserResponse[] = await ctx.prisma.user.findMany({
-      take: limit + 1,
-      skip: (page - 1) * limit,
-      where: whereCriteria,
-      select: userSelector
-    })
+  const users: UserResponse[] = await ctx.prisma.user.findMany({
+    take: limit + 1,
+    skip: (page - 1) * limit,
+    where: whereCriteria,
+    select: userSelector
+  })
 
-    if (users.length === 0) {
-      res.status(404).json({ status: 'error', message: 'Not found' })
-      return
-    }
-
-    const hasNextPage = users.length > limit
-    if (hasNextPage) {
-      users.pop()
-    }
-
-    res.status(200).json({
-      data: users,
-      nextPage: hasNextPage ? page + 1 : null,
-      prevPage: page > 1 ? page - 1 : null
-    })
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Something went wrong' })
+  if (users.length === 0) {
+    throw new RequestError(404, 'Not found')
   }
+
+  const hasNextPage = users.length > limit
+  if (hasNextPage) {
+    users.pop()
+  }
+
+  res.status(200).json({
+    data: users,
+    nextPage: hasNextPage ? page + 1 : null,
+    prevPage: page > 1 ? page - 1 : null
+  })
 }
 
 export const getUser = async (
@@ -79,19 +71,16 @@ export const getUser = async (
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
-  try {
-    const user = await ctx.prisma.user.findUnique({
-      where: { id: parseInt(id) },
-      select: userSelector
-    })
-    if (user != null) {
-      res.status(200).json(user)
-    } else {
-      res.status(404).json({ status: 'error', message: 'Not found' })
-    }
-  } catch (error) {
-    res.status(500).json({ status: 'error', message: 'Something went wrong' })
+  const user = await ctx.prisma.user.findUnique({
+    where: { id: parseInt(id) },
+    select: userSelector
+  })
+
+  if (user == null) {
+    throw new RequestError(404, 'Not found')
   }
+
+  res.status(200).json(user)
 }
 
 export const createUser = async (
@@ -100,29 +89,22 @@ export const createUser = async (
   next: NextFunction,
   ctx: Context
 ): Promise<void> => {
-  checkRequiredFields(['name', 'email', 'password'], req.body)
   const { name, email, lastName, password, role } =
     req.body as UserCreationRequest
   const hashedPassword = bcrypt.hashSync(password, 8)
 
-  try {
-    const user = await ctx.prisma.user.create({
-      data: {
-        name,
-        lastName,
-        email,
-        password: hashedPassword,
-        role
-      },
-      select: userSelector
-    })
-    res.status(201).json(user)
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: error ?? 'Something went wrong'
-    })
-  }
+  const user = await ctx.prisma.user.create({
+    data: {
+      name,
+      lastName,
+      email,
+      password: hashedPassword,
+      role
+    },
+    select: userSelector
+  })
+
+  res.status(201).json(user)
 }
 
 export const updateUser = async (
@@ -134,32 +116,18 @@ export const updateUser = async (
   const { id } = req.params
   const { name, lastName, role, active } = req.body as UserUpdateRequest
 
-  try {
-    const user = await ctx.prisma.user
-      .update({
-        where: { id: parseInt(id) },
-        data: {
-          name,
-          lastName,
-          role,
-          active
-        },
-        select: userSelector
-      })
-      .catch(error => {
-        if (error.code === 'P2025') {
-          res.status(404).json({ status: 'error', message: 'Not found' })
-        }
-      })
+  const user = await ctx.prisma.user.update({
+    where: { id: parseInt(id) },
+    data: {
+      name,
+      lastName,
+      role,
+      active
+    },
+    select: userSelector
+  })
 
-    if (user != null) {
-      res.status(200).json(user)
-    }
-  } catch (error) {
-    res
-      .status(500)
-      .json({ status: 'error', message: error ?? 'Something went wrong' })
-  }
+  res.status(200).json(user)
 }
 
 export const updateUserCredentials = async (
@@ -169,19 +137,31 @@ export const updateUserCredentials = async (
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
-  const { password, email } = req.body as UserCredentialsRequest
+  const { currentPassword, password, email } =
+    req.body as UserCredentialsRequest
 
   const updateData: {
     password?: string
     email?: string
   } = {}
 
+  const findUser = await ctx.prisma.user.findUnique({
+    where: { id: parseInt(id) },
+    select: { password: true }
+  })
+
+  if (findUser == null) {
+    throw new RequestError(404, 'Not found')
+  }
+
+  const isPasswordValid = bcrypt.compareSync(currentPassword, findUser.password)
+
+  if (!isPasswordValid) {
+    throw new RequestError(401, 'Invalid password')
+  }
+
   if (!isValidString(password) && !isValidString(email)) {
-    res.status(400).json({
-      status: 'error',
-      message: 'Email or password must be provided'
-    })
-    return
+    throw new RequestError(400, 'Email or password must be provided')
   }
 
   if (isValidString(email)) {
@@ -192,25 +172,11 @@ export const updateUserCredentials = async (
     updateData.password = bcrypt.hashSync(password, 8)
   }
 
-  try {
-    const user = await ctx.prisma.user
-      .update({
-        where: { id: parseInt(id) },
-        data: updateData,
-        select: userSelector
-      })
-      .catch(error => {
-        if (error.code === 'P2025') {
-          res.status(404).json({ status: 'error', message: 'Not found' })
-        }
-      })
+  const user = await ctx.prisma.user.update({
+    where: { id: parseInt(id) },
+    data: updateData,
+    select: userSelector
+  })
 
-    if (user != null) {
-      res.status(200).json(user)
-    }
-  } catch (error) {
-    res
-      .status(500)
-      .json({ status: 'error', message: error ?? 'Something went wrong' })
-  }
+  res.status(200).json(user)
 }

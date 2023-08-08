@@ -1,7 +1,7 @@
+import { RequestError } from '@exceptions/RequestError'
 import { type RegisterRequest } from '@models/auth.model'
 import { ConfigurationKeys } from '@models/config.model'
 import { type Context } from '@utils/context'
-import { checkRequiredFields } from '@utils/validation'
 import bcrypt from 'bcrypt'
 import { type NextFunction, type Request, type Response } from 'express'
 
@@ -20,11 +20,7 @@ export const login = async (
   }
 
   if (authHeader === undefined || !authHeader.startsWith('Basic ')) {
-    res.status(401).json({
-      status: 'error',
-      message: 'Missing or invalid authorization header'
-    })
-    return
+    throw new RequestError(400, 'Missing or invalid authorization header')
   }
 
   const base64Credentials = authHeader.split(' ')[1]
@@ -32,33 +28,22 @@ export const login = async (
   const [email, password] = credentials.split(':')
 
   if (email === undefined || password === undefined) {
-    res.status(401).json({
-      status: 'error',
-      message: 'Missing or invalid authorization header'
-    })
-    return
+    throw new RequestError(400, 'Missing or invalid authorization header')
   }
 
-  ctx.prisma.user
-    .findUnique({ where: { email } })
-    .then(user => {
-      if (user !== null && bcrypt.compareSync(password, user.password)) {
-        if (user.role === 'ADMIN') {
-          req.session.cookie.maxAge = rememberMe ? ONE_DAY_MS * 30 : ONE_DAY_MS
-        } else if (user.role === 'USER') {
-          req.session.cookie.maxAge = 1000 * 60
-        }
-        req.session.user = user.id
-        res.status(200).send()
-      } else {
-        res
-          .status(401)
-          .json({ status: 'error', message: 'Invalid credentials' })
-      }
-    })
-    .catch(() => {
-      res.status(500).json({ status: 'error', message: 'Something went wrong' })
-    })
+  const user = await ctx.prisma.user.findUnique({ where: { email } })
+
+  if (user !== null && bcrypt.compareSync(password, user.password)) {
+    if (user.role === 'ADMIN') {
+      req.session.cookie.maxAge = rememberMe ? ONE_DAY_MS * 30 : ONE_DAY_MS
+    } else if (user.role === 'USER') {
+      req.session.cookie.maxAge = 1000 * 60
+    }
+    req.session.user = user.id
+    res.status(200).send()
+  } else {
+    throw new RequestError(401, 'Invalid credentials')
+  }
 }
 
 export const register = async (
@@ -74,18 +59,13 @@ export const register = async (
   })
 
   if (config == null || config.value === 'false') {
-    res.status(403).json({
-      status: 'error',
-      message: 'Forbidden'
-    })
-    return
+    throw new RequestError(403, 'Forbidden')
   }
 
-  checkRequiredFields(['name', 'email', 'password'], req.body)
   const { name, email, lastName, password } = req.body as RegisterRequest
   const hashedPassword = bcrypt.hashSync(password, 8)
 
-  const user = await ctx.prisma.user.create({
+  await ctx.prisma.user.create({
     data: {
       name,
       lastName,
@@ -95,11 +75,7 @@ export const register = async (
     }
   })
 
-  if (user !== null) {
-    res.status(201).send()
-  } else {
-    res.status(500).json({ status: 'error', message: 'Something went wrong' })
-  }
+  res.status(201).send()
 }
 
 export const logout = async (

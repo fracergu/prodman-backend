@@ -1,12 +1,3 @@
-import { RequiredFieldsError } from '@exceptions/RequiredFieldsError'
-
-export const checkRequiredFields = (fields: string[], body: any) => {
-  const missingFields = fields.filter(field => body[field] === undefined)
-  if (missingFields.length > 0) {
-    throw new RequiredFieldsError(missingFields)
-  }
-}
-
 export const getIntegerParam = (
   value: string | undefined,
   defaultValue: number
@@ -23,6 +14,6 @@ export const getIntegerParam = (
   return parsedValue
 }
 
-export const isValidString = (value: string | undefined): boolean => {
+export const isValidString = (value: string): boolean => {
   return value !== undefined && value !== '' && value !== null
 }

@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt'
 import { type NextFunction, type Request, type Response } from 'express'
 
 import { login, logout, register } from '../auth.controller'
+import { RequestError } from '@exceptions/RequestError'
 
 describe('AuthController', () => {
   let context: MockContext
@@ -109,47 +110,43 @@ describe('AuthController', () => {
       })
     })
 
-    it('should return 401 if authorization header is missing', async () => {
-      await login(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(401)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Missing or invalid authorization header'
+    it('should throw a 400 if authorization header is missing', async () => {
+      await login(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.statusCode).toEqual(400)
+        expect(err.message).toEqual('Missing or invalid authorization header')
       })
     })
 
-    it('should return 401 if authorization header is invalid', async () => {
+    it('should throw a 400 if authorization header is invalid', async () => {
       req.headers.authorization = `Basic ${btoa('invalid')}`
-      await login(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(401)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Missing or invalid authorization header'
+      await login(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.statusCode).toEqual(400)
+        expect(err.message).toEqual('Missing or invalid authorization header')
       })
     })
 
-    it('should return 401 if user is not found', async () => {
+    it('should throw a 401 if user is not found', async () => {
       req.headers.authorization = `Basic ${base64Credentials}`
       req.body = { rememberMe: true }
       context.prisma.user.findUnique.mockResolvedValueOnce(null)
-      await login(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(401)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Invalid credentials'
+      await login(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.statusCode).toEqual(401)
+        expect(err.message).toEqual('Invalid credentials')
       })
     })
 
-    it('should return 401 if password is incorrect', async () => {
+    it('should throw a 401 if password is incorrect', async () => {
       const wrongBase64Credentials = btoa(`${mockUser.email}:wrongPassword`)
       req.headers.authorization = `Basic ${wrongBase64Credentials}`
       req.body = { rememberMe: true }
       context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
-      await login(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(401)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Invalid credentials'
+      await login(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.statusCode).toEqual(401)
+        expect(err.message).toEqual('Invalid credentials')
       })
     })
   })
@@ -185,17 +182,16 @@ describe('AuthController', () => {
       expect(res.status).toHaveBeenCalledWith(201)
     })
 
-    it('should return 403 if register is disabled', async () => {
+    it('should throw a 403 if register is disabled', async () => {
       context.prisma.config.findUnique.mockResolvedValueOnce({
         key: 'registerEnabled',
         type: 'boolean',
         value: 'false'
       })
-      await register(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(403)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Forbidden'
+      await register(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.statusCode).toEqual(403)
+        expect(err.message).toEqual('Forbidden')
       })
     })
   })

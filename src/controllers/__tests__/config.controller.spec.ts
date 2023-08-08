@@ -2,6 +2,7 @@ import {
   getConfigurations,
   updateConfigurations
 } from '@controllers/config.controller'
+import { RequestError } from '@exceptions/RequestError'
 import {
   ConfigurationKeys,
   ConfigurationValueTypes
@@ -83,6 +84,18 @@ describe('ConfigController', () => {
       expect(context.prisma.config.update).toHaveBeenCalled()
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(parsedMockConfig)
+    })
+
+    it('should throw a 400 if key is invalid', async () => {
+      req.body = {
+        key: 'INVALID_KEY',
+        value: false
+      }
+      await updateConfigurations(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.statusCode).toBe(400)
+        expect(err.message).toBe('Invalid configuration key')
+      })
     })
   })
 })

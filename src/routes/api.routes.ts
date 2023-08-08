@@ -17,9 +17,9 @@ export const apiVersion = openApiDocument.info.version as string
 apiRouter.use('/auth', authRoutes)
 apiRouter.use('/config', configRoutes)
 apiRouter.use('/users', userRoutes)
+apiRouter.use(errorHandler)
 
 // Error handler
-apiRouter.use(errorHandler)
 
 apiRouter.use('/api-docs', swaggerUi.serve, swaggerUi.setup(openApiDocument))
 apiRouter.get('/openapi', (req, res) => {

@@ -25,6 +25,7 @@ export interface UserUpdateRequest {
 }
 
 export interface UserCredentialsRequest {
+  currentPassword: string
   email: string
   password: string
 }

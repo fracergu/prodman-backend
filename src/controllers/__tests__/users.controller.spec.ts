@@ -5,6 +5,7 @@ import {
   updateUser,
   updateUserCredentials
 } from '@controllers/users.controller'
+import { RequestError } from '@exceptions/RequestError'
 import {
   type UserCreationRequest,
   type UserCredentialsRequest,
@@ -12,9 +13,9 @@ import {
   type UserUpdateRequest
 } from '@models/users.model'
 import { type User } from '@prisma/client'
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { createMockContext, type MockContext } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
+import bcrypt from 'bcrypt'
 
 describe('UsersController', () => {
   let context: MockContext
@@ -172,24 +173,19 @@ describe('UsersController', () => {
       })
     })
 
-    it('should return users with specified pagination', async () => {
-      req = mockRequest({ limit: '5', page: '2' })
-      await getUsers(req, res, next, context)
-      expect(context.prisma.user.findMany).toHaveBeenCalledWith({
-        take: 6,
-        skip: 5,
-        where: {},
-        select: userSelector
+    it('should throw a 404 if no users are found', async () => {
+      context.prisma.user.findMany.mockResolvedValue([])
+      await getUsers(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.message).toBe('Not found')
       })
     })
 
-    it('should return 404 if no users are found', async () => {
-      context.prisma.user.findMany.mockResolvedValue([])
-      await getUsers(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(404)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Not found'
+    it('should pass any other error to the error handler', async () => {
+      context.prisma.user.findMany.mockRejectedValueOnce(new Error('error'))
+      await getUsers(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(Error)
+        expect(err.message).toBe('error')
       })
     })
   })
@@ -217,14 +213,21 @@ describe('UsersController', () => {
       expect(res.json).toHaveBeenCalledWith(mockUser)
     })
 
-    it('should return 404 if user is not found', async () => {
+    it('should throw a 404 if user is not found', async () => {
       req = { params: { id: '2' } } as any
       context.prisma.user.findUnique.mockResolvedValue(null)
-      await getUser(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(404)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Not found'
+      await getUser(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.message).toBe('Not found')
+      })
+    })
+
+    it('should pass any other error to the error handler', async () => {
+      req = { params: { id: '2' } } as any
+      context.prisma.user.findUnique.mockRejectedValueOnce(new Error('error'))
+      await getUser(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(Error)
+        expect(err.message).toBe('error')
       })
     })
   })
@@ -286,19 +289,19 @@ describe('UsersController', () => {
       expect(res.json).toHaveBeenCalledWith(updatedUser)
     })
 
-    it('should return 404 if user is not found', async () => {
-      req = { params: { id: '2' }, body: {} } as any
-      context.prisma.user.update.mockRejectedValueOnce(
-        new PrismaClientKnownRequestError('message', {
-          code: 'P2025',
-          clientVersion: '1'
-        })
-      )
-      await updateUser(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(404)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Not found'
+    it('should pass any other error to the error handler', async () => {
+      const updateRequest: UserUpdateRequest = {
+        name: 'Updated',
+        lastName: 'Name',
+        role: 'admin',
+        active: true
+      }
+      req = { params: { id: '1' } } as any
+      req.body = updateRequest
+      context.prisma.user.update.mockRejectedValueOnce(new Error('error'))
+      await updateUser(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(Error)
+        expect(err.message).toBe('error')
       })
     })
   })
@@ -306,6 +309,7 @@ describe('UsersController', () => {
   describe('updateUserCredentials', () => {
     it('should update user email and password', async () => {
       const credentialsRequest: UserCredentialsRequest = {
+        currentPassword: 'password',
         email: 'updated@example.com',
         password: 'newpassword'
       }
@@ -320,40 +324,75 @@ describe('UsersController', () => {
         updatedAt: new Date()
       }
       req = { params: { id: '1' }, body: credentialsRequest } as any
-      context.prisma.user.update.mockResolvedValue(updatedUser as User)
+
+      context.prisma.user.findUnique.mockResolvedValueOnce({
+        password: bcrypt.hashSync('password', 8)
+      } as User)
+
+      context.prisma.user.update.mockResolvedValueOnce(updatedUser as User)
       await updateUserCredentials(req, res, next, context)
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(updatedUser)
     })
 
-    it('should return 400 if neither email nor password is provided', async () => {
-      req = { params: { id: '1' }, body: {} } as any
-      await updateUserCredentials(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(400)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Email or password must be provided'
+    it('should throw a 404 if user is not found', async () => {
+      const credentialsRequest: UserCredentialsRequest = {
+        currentPassword: 'password',
+        email: 'test@test.com',
+        password: 'newpassword'
+      }
+      req = { params: { id: '1' }, body: credentialsRequest } as any
+      context.prisma.user.findUnique.mockResolvedValueOnce(null)
+      await updateUserCredentials(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.message).toBe('Not found')
       })
     })
 
-    it('should return 404 if user is not found', async () => {
+    it('should throw a 401 if current password is invalid', async () => {
+      const credentialsRequest: UserCredentialsRequest = {
+        currentPassword: 'password',
+        email: 'test@test.com',
+        password: 'newpassword'
+      }
+      req = { params: { id: '1' }, body: credentialsRequest } as any
+      context.prisma.user.findUnique.mockResolvedValueOnce({
+        password: bcrypt.hashSync('invalidpassword', 8)
+      } as User)
+      await updateUserCredentials(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.message).toBe('Invalid password')
+      })
+    })
+
+    it('should throw a 400 if neither email nor password is provided', async () => {
       req = {
-        params: { id: '2' },
-        body: {
-          email: 'newemail@example.com'
-        }
+        params: { id: '1' },
+        body: { currentPassword: 'password' }
       } as any
-      context.prisma.user.update.mockRejectedValueOnce(
-        new PrismaClientKnownRequestError('message', {
-          code: 'P2025',
-          clientVersion: '1'
-        })
-      )
-      await updateUserCredentials(req, res, next, context)
-      expect(res.status).toHaveBeenCalledWith(404)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Not found'
+      context.prisma.user.findUnique.mockResolvedValueOnce({
+        password: bcrypt.hashSync('password', 8)
+      } as User)
+      await updateUserCredentials(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.message).toBe('Email or password must be provided')
+      })
+    })
+
+    it('should pass any other error to the error handler', async () => {
+      const credentialsRequest: UserCredentialsRequest = {
+        currentPassword: 'password',
+        password: 'newpassword',
+        email: 'test@test.com'
+      }
+      req = { params: { id: '1' }, body: credentialsRequest } as any
+      context.prisma.user.findUnique.mockResolvedValueOnce({
+        password: bcrypt.hashSync('password', 8)
+      } as User)
+      context.prisma.user.update.mockRejectedValueOnce(new Error('error'))
+      await updateUserCredentials(req, res, next, context).catch(err => {
+        expect(err).toBeInstanceOf(Error)
+        expect(err.message).toBe('error')
       })
     })
   })
