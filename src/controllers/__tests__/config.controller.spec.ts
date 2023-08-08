@@ -7,7 +7,7 @@ import {
   ConfigurationValueTypes
 } from '@models/config.model'
 import { parseConfigurationArray } from '@utils/config'
-import { MockContext, createMockContext } from '@utils/context'
+import { createMockContext, type MockContext } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
 
 describe('ConfigController', () => {

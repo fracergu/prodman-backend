@@ -1,7 +1,8 @@
-import { errorHandler } from '../error.middleware'
 import { HttpException } from '@exceptions/HttpException'
 import { RequiredFieldsError } from '@exceptions/RequiredFieldsError'
 import { type NextFunction, type Request, type Response } from 'express'
+
+import { errorHandler } from '../error.middleware'
 
 describe('errorHandler Middleware', () => {
   let req: Request

@@ -1,4 +1,4 @@
-import { Context } from '@utils/context'
+import { type Context } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
 
 export const requireAdminRole = async (
@@ -9,7 +9,7 @@ export const requireAdminRole = async (
 ) => {
   const userId = req.session?.user
 
-  if (!userId) {
+  if (userId == null) {
     return res
       .status(401)
       .json({ status: 'error', message: 'Not authenticated' })
@@ -17,7 +17,7 @@ export const requireAdminRole = async (
 
   const user = await ctx.prisma.user.findUnique({ where: { id: userId } })
 
-  if (!user || user.role !== 'ADMIN') {
+  if (user == null || user.role !== 'ADMIN') {
     return res.status(403).json({ status: 'error', message: 'Forbidden' })
   }
 

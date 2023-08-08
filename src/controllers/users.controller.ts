@@ -1,13 +1,17 @@
 import {
-  UserCreationRequest,
-  UserCredentialsRequest,
-  UserResponse,
-  UserUpdateRequest
+  type UserCreationRequest,
+  type UserCredentialsRequest,
+  type UserResponse,
+  type UserUpdateRequest
 } from '@models/users.model'
-import { Context } from '@utils/context'
-import { checkRequiredFields } from '@utils/validation'
-import { type NextFunction, type Request, type Response } from 'express'
+import { type Context } from '@utils/context'
+import {
+  checkRequiredFields,
+  getIntegerParam,
+  isValidString
+} from '@utils/validation'
 import bcrypt from 'bcrypt'
+import { type NextFunction, type Request, type Response } from 'express'
 
 const userSelector = {
   id: true,
@@ -27,16 +31,16 @@ export const getUsers = async (
   next: NextFunction,
   ctx: Context
 ): Promise<void> => {
-  const limit = parseInt(req.query.limit as string) || 10
-  const page = parseInt(req.query.page as string) || 1
+  const limit = getIntegerParam(req.query.limit as string, 10)
+  const page = getIntegerParam(req.query.page as string, 1)
   const search = req.query.search as string
   const role = req.query.role as string
 
   const whereCriteria: any = {}
-  if (search) {
+  if (isValidString(search)) {
     whereCriteria.name = { contains: search }
   }
-  if (role) {
+  if (isValidString(role)) {
     whereCriteria.role = role
   }
 
@@ -80,7 +84,7 @@ export const getUser = async (
       where: { id: parseInt(id) },
       select: userSelector
     })
-    if (user) {
+    if (user != null) {
       res.status(200).json(user)
     } else {
       res.status(404).json({ status: 'error', message: 'Not found' })
@@ -145,13 +149,11 @@ export const updateUser = async (
       .catch(error => {
         if (error.code === 'P2025') {
           res.status(404).json({ status: 'error', message: 'Not found' })
-          return
         }
       })
 
-    if (user) {
+    if (user != null) {
       res.status(200).json(user)
-      return
     }
   } catch (error) {
     res
@@ -169,25 +171,28 @@ export const updateUserCredentials = async (
   const { id } = req.params
   const { password, email } = req.body as UserCredentialsRequest
 
-  const updateData: any = {}
+  const updateData: {
+    password?: string
+    email?: string
+  } = {}
 
-  if (email) {
+  if (!isValidString(password) && !isValidString(email)) {
+    res.status(400).json({
+      status: 'error',
+      message: 'Email or password must be provided'
+    })
+    return
+  }
+
+  if (isValidString(email)) {
     updateData.email = email
   }
 
-  if (password) {
+  if (isValidString(password)) {
     updateData.password = bcrypt.hashSync(password, 8)
   }
 
   try {
-    if (!email && !password) {
-      res.status(400).json({
-        status: 'error',
-        message: 'Email or password must be provided'
-      })
-      return
-    }
-
     const user = await ctx.prisma.user
       .update({
         where: { id: parseInt(id) },
@@ -197,13 +202,11 @@ export const updateUserCredentials = async (
       .catch(error => {
         if (error.code === 'P2025') {
           res.status(404).json({ status: 'error', message: 'Not found' })
-          return
         }
       })
 
-    if (user) {
+    if (user != null) {
       res.status(200).json(user)
-      return
     }
   } catch (error) {
     res

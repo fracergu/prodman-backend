@@ -1,16 +1,17 @@
+import { errorHandler } from '@middlewares/error.middleware'
 import { Router } from 'express'
+import swaggerUi from 'swagger-ui-express'
+import yaml from 'yamljs'
+
 import authRoutes from './auth.routes'
 import configRoutes from './config.routes'
 import userRoutes from './users.routes'
-import { errorHandler } from '@middlewares/error.middleware'
-import swaggerUi from 'swagger-ui-express'
-import yaml from 'yamljs'
 
 const apiRouter = Router()
 
 const openApiDocument = yaml.load('./docs/openapi.yaml')
 
-export const apiVersion = openApiDocument.info.version
+export const apiVersion = openApiDocument.info.version as string
 
 // API version specific routes
 apiRouter.use('/auth', authRoutes)

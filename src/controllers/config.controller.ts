@@ -1,14 +1,14 @@
 import {
-  ConfigRequest,
-  ConfigurationKeys,
-  DatabaseConfig
+  type ConfigRequest,
+  type ConfigurationKeys,
+  type DatabaseConfig
 } from '@models/config.model'
 import {
   ConfigurationTypeMapping,
   parseConfigurationArray,
   parseConfigurationValue
 } from '@utils/config'
-import { Context } from '@utils/context'
+import { type Context } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
 
 export const getConfigurations = async (
@@ -23,7 +23,7 @@ export const getConfigurations = async (
       const parsedResponse = parseConfigurationArray(config)
       res.status(200).json(parsedResponse)
     })
-    .catch((error: Error) => {
+    .catch(() => {
       res.status(500).json({ status: 'error', message: 'Something went wrong' })
     })
 }
@@ -37,7 +37,7 @@ export const updateConfigurations = async (
   const { key, value } = req.body as ConfigRequest
   const expectedType = ConfigurationTypeMapping[key as ConfigurationKeys]
 
-  if (!expectedType) {
+  if (expectedType === undefined) {
     res
       .status(400)
       .json({ status: 'error', message: 'Invalid configuration key' })
@@ -55,7 +55,7 @@ export const updateConfigurations = async (
       const parsedResponse = parseConfigurationArray([configuration])
       res.status(200).json(parsedResponse)
     })
-    .catch((error: Error) => {
+    .catch(() => {
       res.status(500).json({ status: 'error', message: 'Something went wrong' })
     })
 }

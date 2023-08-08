@@ -6,15 +6,15 @@ import {
   updateUserCredentials
 } from '@controllers/users.controller'
 import {
-  UserCreationRequest,
-  UserCredentialsRequest,
-  UserResponse,
-  UserUpdateRequest
+  type UserCreationRequest,
+  type UserCredentialsRequest,
+  type UserResponse,
+  type UserUpdateRequest
 } from '@models/users.model'
-import { Prisma, User } from '@prisma/client'
+import { type User } from '@prisma/client'
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
-import { createMockContext, MockContext } from '@utils/context'
-import { NextFunction, Request, Response } from 'express'
+import { createMockContext, type MockContext } from '@utils/context'
+import { type NextFunction, type Request, type Response } from 'express'
 
 describe('UsersController', () => {
   let context: MockContext
@@ -23,7 +23,7 @@ describe('UsersController', () => {
   let next: NextFunction
 
   const mockRequest = (query: Partial<Request['query']> = {}) => {
-    return { query } as Request
+    return { query } as any
   }
 
   const mockResponse = () => {

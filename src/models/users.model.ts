@@ -1,4 +1,4 @@
-export type UserCreationRequest = {
+export interface UserCreationRequest {
   name: string
   lastName?: string
   email: string
@@ -6,7 +6,7 @@ export type UserCreationRequest = {
   role: string
 }
 
-export type UserResponse = {
+export interface UserResponse {
   id: number
   name: string
   lastName: string | null
@@ -17,14 +17,14 @@ export type UserResponse = {
   updatedAt: Date
 }
 
-export type UserUpdateRequest = {
+export interface UserUpdateRequest {
   name?: string
   lastName?: string
   role?: string
   active?: boolean
 }
 
-export type UserCredentialsRequest = {
+export interface UserCredentialsRequest {
   email: string
   password: string
 }

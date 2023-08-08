@@ -54,7 +54,7 @@ export function parseConfigurationValue(
   type: ConfigurationValueTypes,
   value: string
 ): string | number | boolean {
-  if (!value) throw new Error('Invalid configuration value')
+  if (value === undefined) throw new Error('Invalid configuration value')
   switch (type) {
     case ConfigurationValueTypes.BOOLEAN:
       return _parseBoolean(value)
@@ -67,10 +67,10 @@ export function parseConfigurationValue(
   }
 }
 
-export function parseConfigurationArray(configurations: Configuration[]): {
-  [key: string]: string | number | boolean
-} {
-  const parsedConfigurations: { [key: string]: string | number | boolean } = {}
+export function parseConfigurationArray(
+  configurations: Configuration[]
+): Record<string, string | number | boolean> {
+  const parsedConfigurations: Record<string, string | number | boolean> = {}
   for (const config of configurations) {
     parsedConfigurations[config.key] = parseConfigurationValue(
       config.type,

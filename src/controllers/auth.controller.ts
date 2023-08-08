@@ -1,4 +1,4 @@
-import { LoginRequest, type RegisterRequest } from '@models/auth.model'
+import { type RegisterRequest } from '@models/auth.model'
 import { ConfigurationKeys } from '@models/config.model'
 import { type Context } from '@utils/context'
 import { checkRequiredFields } from '@utils/validation'
@@ -14,9 +14,12 @@ export const login = async (
   ctx: Context
 ): Promise<void> => {
   const authHeader = req.headers.authorization
-  const { rememberMe } = (req.body as LoginRequest) || false
+  let rememberMe = false
+  if (req.body?.rememberMe !== undefined) {
+    rememberMe = req.body.rememberMe
+  }
 
-  if (!authHeader || !authHeader.startsWith('Basic ')) {
+  if (authHeader === undefined || !authHeader.startsWith('Basic ')) {
     res.status(401).json({
       status: 'error',
       message: 'Missing or invalid authorization header'
@@ -28,7 +31,7 @@ export const login = async (
   const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8')
   const [email, password] = credentials.split(':')
 
-  if (!email || !password) {
+  if (email === undefined || password === undefined) {
     res.status(401).json({
       status: 'error',
       message: 'Missing or invalid authorization header'
@@ -70,7 +73,7 @@ export const register = async (
     }
   })
 
-  if (!config || config.value === 'false') {
+  if (config == null || config.value === 'false') {
     res.status(403).json({
       status: 'error',
       message: 'Forbidden'
@@ -92,7 +95,7 @@ export const register = async (
     }
   })
 
-  if (user) {
+  if (user !== null) {
     res.status(201).send()
   } else {
     res.status(500).json({ status: 'error', message: 'Something went wrong' })

@@ -1,7 +1,8 @@
-import { requireAdminRole } from '../auth.middleware'
-import { User } from '@prisma/client'
-import { MockContext, createMockContext } from '@utils/context'
+import { type User } from '@prisma/client'
+import { createMockContext, type MockContext } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
+
+import { requireAdminRole } from '../auth.middleware'
 
 describe('requireAdminRole Middleware', () => {
   let context: MockContext
