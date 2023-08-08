@@ -1,5 +1,6 @@
 Table Config {
   key String [pk]
+  type String
   value String
 }
 

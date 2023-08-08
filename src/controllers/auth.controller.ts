@@ -1,4 +1,5 @@
 import { LoginBody, type RegisterBody } from '@models/auth.model'
+import { ConfigurationKeys } from '@models/config.model'
 import { type Context } from '@utils/context'
 import { checkRequiredFields } from '@utils/validation'
 import bcrypt from 'bcrypt'
@@ -63,6 +64,20 @@ export const register = async (
   next: NextFunction,
   ctx: Context
 ): Promise<void> => {
+  const config = await ctx.prisma.config.findUnique({
+    where: {
+      key: ConfigurationKeys.REGISTER_ENABLED
+    }
+  })
+
+  if (!config || config.value === 'false') {
+    res.status(403).json({
+      status: 'error',
+      message: 'Forbidden'
+    })
+    return
+  }
+
   checkRequiredFields(['name', 'email', 'password'], req.body)
   const { name, email, lastName, password } = req.body as RegisterBody
   const hashedPassword = bcrypt.hashSync(password, 8)

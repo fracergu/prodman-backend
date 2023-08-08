@@ -9,6 +9,7 @@ generator client {
 
 model Config {
     key   String @id
+    type  String
     value String
 }
 

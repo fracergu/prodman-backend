@@ -153,6 +153,11 @@ describe('AuthController', () => {
 
   describe('register', () => {
     it('should create a new user', async () => {
+      context.prisma.config.findUnique.mockResolvedValueOnce({
+        key: 'registerEnabled',
+        type: 'boolean',
+        value: 'true'
+      })
       context.prisma.user.findMany.mockResolvedValueOnce([])
       context.prisma.user.create.mockResolvedValueOnce(mockUser)
       req.body = {
@@ -175,6 +180,20 @@ describe('AuthController', () => {
       })
 
       expect(res.status).toHaveBeenCalledWith(201)
+    })
+
+    it('should return 403 if register is disabled', async () => {
+      context.prisma.config.findUnique.mockResolvedValueOnce({
+        key: 'registerEnabled',
+        type: 'boolean',
+        value: 'false'
+      })
+      await register(req, res, next, context)
+      expect(res.status).toHaveBeenCalledWith(403)
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Forbidden'
+      })
     })
   })
 

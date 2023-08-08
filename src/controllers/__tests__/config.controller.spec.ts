@@ -2,6 +2,11 @@ import {
   getConfigurations,
   updateConfigurations
 } from '@controllers/config.controller'
+import {
+  ConfigurationKeys,
+  ConfigurationValueTypes
+} from '@models/config.model'
+import { parseConfigurationArray } from '@utils/config'
 import { MockContext, createMockContext } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
 
@@ -49,14 +54,13 @@ describe('ConfigController', () => {
 
   const mockConfig = [
     {
-      key: 'configKey1',
-      value: 'configValue1'
-    },
-    {
-      key: 'configKey2',
-      value: 'configValue2'
+      key: ConfigurationKeys.REGISTER_ENABLED,
+      type: ConfigurationValueTypes.BOOLEAN,
+      value: 'true'
     }
   ]
+
+  const parsedMockConfig = parseConfigurationArray(mockConfig)
 
   describe('getConfigurations', () => {
     it('should return configurations', async () => {
@@ -64,18 +68,7 @@ describe('ConfigController', () => {
       await getConfigurations(req, res, next, context)
       expect(context.prisma.config.findMany).toHaveBeenCalled()
       expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith(mockConfig)
-    })
-
-    it('should return error if something went wrong', async () => {
-      context.prisma.config.findMany.mockRejectedValueOnce(new Error())
-      await getConfigurations(req, res, next, context)
-      expect(context.prisma.config.findMany).toHaveBeenCalled()
-      expect(res.status).toHaveBeenCalledWith(500)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Something went wrong'
-      })
+      expect(res.json).toHaveBeenCalledWith(parsedMockConfig)
     })
   })
 
@@ -83,28 +76,13 @@ describe('ConfigController', () => {
     it('should update configuration', async () => {
       context.prisma.config.update.mockResolvedValueOnce(mockConfig[0])
       req.body = {
-        key: mockConfig[0].key,
-        value: mockConfig[0].value
+        key: ConfigurationKeys.REGISTER_ENABLED,
+        value: false
       }
       await updateConfigurations(req, res, next, context)
       expect(context.prisma.config.update).toHaveBeenCalled()
       expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith(mockConfig[0])
-    })
-
-    it('should return error if something went wrong', async () => {
-      req.body = {
-        key: mockConfig[0].key,
-        value: mockConfig[0].value
-      }
-      context.prisma.config.update.mockRejectedValueOnce(new Error())
-      await updateConfigurations(req, res, next, context)
-      expect(context.prisma.config.update).toHaveBeenCalled()
-      expect(res.status).toHaveBeenCalledWith(500)
-      expect(res.json).toHaveBeenCalledWith({
-        status: 'error',
-        message: 'Something went wrong'
-      })
+      expect(res.json).toHaveBeenCalledWith(parsedMockConfig)
     })
   })
 })

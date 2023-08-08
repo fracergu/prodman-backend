@@ -1,3 +1,10 @@
+import { ConfigurationKeys, DatabaseConfig } from '@models/config.model'
+import {
+  Configuration,
+  ConfigurationTypeMapping,
+  parseConfigurationArray,
+  parseConfigurationValue
+} from '@utils/config'
 import { type NextFunction, type Request, type Response } from 'express'
 import { Context } from 'vm'
 
@@ -7,10 +14,15 @@ export const getConfigurations = async (
   next: NextFunction,
   ctx: Context
 ): Promise<void> => {
-  const configurations = await ctx.prisma.config.findMany().catch(() => {
-    res.status(500).json({ status: 'error', message: 'Something went wrong' })
-  })
-  res.status(200).json(configurations)
+  ctx.prisma.config
+    .findMany()
+    .then((config: DatabaseConfig[]) => {
+      const parsedResponse = parseConfigurationArray(config)
+      res.status(200).json(parsedResponse)
+    })
+    .catch((error: Error) => {
+      res.status(500).json({ status: 'error', message: 'Something went wrong' })
+    })
 }
 
 export const updateConfigurations = async (
@@ -20,13 +32,27 @@ export const updateConfigurations = async (
   ctx: Context
 ): Promise<void> => {
   const { key, value } = req.body
-  const configuration = await ctx.prisma.config
+  const expectedType = ConfigurationTypeMapping[key as ConfigurationKeys]
+
+  if (!expectedType) {
+    res
+      .status(400)
+      .json({ status: 'error', message: 'Invalid configuration key' })
+    return
+  }
+
+  const parsedValue = parseConfigurationValue(expectedType, value.toString())
+
+  ctx.prisma.config
     .update({
       where: { key },
-      data: { value }
+      data: { value: parsedValue.toString() }
     })
-    .catch(() => {
+    .then((configuration: DatabaseConfig) => {
+      const parsedResponse = parseConfigurationArray([configuration])
+      res.status(200).json(parsedResponse)
+    })
+    .catch((error: Error) => {
       res.status(500).json({ status: 'error', message: 'Something went wrong' })
     })
-  res.status(200).json(configuration)
 }

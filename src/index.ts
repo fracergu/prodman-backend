@@ -1,6 +1,6 @@
 import authRoutes from '@routes/auth.routes'
 import configRoutes from '@routes/config.routes'
-import { initializeDefaultConfigurations } from '@utils/initialConfig'
+import { initializeDefaultConfigurations } from '@utils/config'
 import { errorHandler } from '@middlewares/error.middleware'
 import genFunc from 'connect-pg-simple'
 import dotenv from 'dotenv'

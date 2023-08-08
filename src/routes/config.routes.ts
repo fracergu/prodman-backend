@@ -35,6 +35,13 @@ router.use(withContext(requireAdminRole))
  *     responses:
  *       200:
  *         description: Successful operation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 registerEnabled:
+ *                   type: boolean
  *       401:
  *         description: Unauthorized
  *       403:
@@ -61,14 +68,29 @@ router.get('/', withContext(getConfigurations))
  *               key:
  *                 type: string
  *                 description: The key of the configuration
- *                 example: 'test'
+ *                 example: 'configKey1'
  *               value:
- *                 type: string
+ *                 oneOf:
+ *                   - type: string
+ *                   - type: number
+ *                   - type: boolean
  *                 description: The value of the configuration
- *                 example: 'test'
+ *                 example: false
  *     responses:
  *       200:
  *         description: Successful operation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 key:
+ *                   type: string
+ *                 value:
+ *                   oneOf:
+ *                     - type: string
+ *                     - type: number
+ *                     - type: boolean
  *       401:
  *         description: Unauthorized
  *       403:
