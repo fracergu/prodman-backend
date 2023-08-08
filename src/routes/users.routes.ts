@@ -1,7 +1,10 @@
 import {
-  getConfigurations,
-  updateConfigurations
-} from '@controllers/config.controller'
+  createUser,
+  getUser,
+  getUsers,
+  updateUser,
+  updateUserCredentials
+} from '@controllers/users.controller'
 import { PrismaClient } from '@prisma/client'
 import { type Context } from '@utils/context'
 import express from 'express'
@@ -25,7 +28,10 @@ const router = express.Router()
 
 router.use(withContext(requireAdminRole))
 
-router.get('/', withContext(getConfigurations))
-router.put('/', withContext(updateConfigurations))
+router.get('/', withContext(getUsers))
+router.get('/:id', withContext(getUser))
+router.post('/', withContext(createUser))
+router.put('/:id', withContext(updateUser))
+router.put('/:id/credentials', withContext(updateUserCredentials))
 
 export default router

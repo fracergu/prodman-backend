@@ -1,12 +1,15 @@
-import { ConfigurationKeys, DatabaseConfig } from '@models/config.model'
 import {
-  Configuration,
+  ConfigRequest,
+  ConfigurationKeys,
+  DatabaseConfig
+} from '@models/config.model'
+import {
   ConfigurationTypeMapping,
   parseConfigurationArray,
   parseConfigurationValue
 } from '@utils/config'
+import { Context } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
-import { Context } from 'vm'
 
 export const getConfigurations = async (
   req: Request,
@@ -31,7 +34,7 @@ export const updateConfigurations = async (
   next: NextFunction,
   ctx: Context
 ): Promise<void> => {
-  const { key, value } = req.body
+  const { key, value } = req.body as ConfigRequest
   const expectedType = ConfigurationTypeMapping[key as ConfigurationKeys]
 
   if (!expectedType) {

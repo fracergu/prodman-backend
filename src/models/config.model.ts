@@ -1,4 +1,4 @@
-export interface ConfigBody {
+export interface ConfigRequest {
   key: string
   value: string
 }
@@ -18,5 +18,3 @@ export interface DatabaseConfig {
   type: ConfigurationValueTypes
   value: string
 }
-
-export interface ConfigModel {}

@@ -1,8 +1,8 @@
-export interface LoginBody {
+export interface LoginRequest {
   rememberMe: boolean
 }
 
-export interface RegisterBody {
+export interface RegisterRequest {
   name: string
   lastName?: string
   email: string

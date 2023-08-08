@@ -11,6 +11,9 @@ Table User {
   lastName String
   password String
   role String
+  active Boolean
+  createdAt DateTime
+  updatedAt DateTime
 }
 
 Table Product {

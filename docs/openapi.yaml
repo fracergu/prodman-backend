@@ -1,0 +1,389 @@
+openapi: 3.0.0
+info:
+  title: Prodman API
+  version: '1'
+  description: This is the API documentation for Prodman, a production management tool.
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local server
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+
+  schemas:
+    LoginRequest:
+      type: object
+      properties:
+        rememberMe:
+          type: boolean
+          description: Whether to remember the user or not
+          example: true
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The user's name
+          example: John
+        lastName:
+          type: string
+          description: The user's last name
+          example: Doe
+        email:
+          type: string
+          description: The user's email
+          example: johndoe@example.com
+        password:
+          type: string
+          description: The user's password
+          example: Very$ecureP@ssword
+    ConfigRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          description: The key of the configuration
+          example: 'configKey1'
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+          description: The value of the configuration
+          example: false
+    ConfigResponse:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+    UserCreationRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          description: The user's email
+          example: johndoe@example.com
+        name:
+          type: string
+          description: The user's name
+          example: John
+        lastName:
+          type: string
+          description: The user's last name
+          example: Doe
+        password:
+          type: string
+          description: The user's password
+          example: Very$ecureP@ssword
+        role:
+          type: string
+          description: The user's role
+          example: admin
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The user's id
+          example: 1
+        email:
+          type: string
+          description: The user's email
+          example: johndoe@example.com
+        name:
+          type: string
+          description: The user's name
+          example: John
+        lastName:
+          type: string
+          description: The user's last name
+          example: Doe
+        role:
+          type: string
+          description: The user's role
+          example: ADMIN
+        active:
+          type: boolean
+          description: Whether the user is active or not
+          example: true
+    UserUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The user's name
+          example: John
+        lastName:
+          type: string
+          description: The user's last name
+          example: Doe
+        role:
+          type: string
+          description: The user's role
+          example: ADMIN
+        active:
+          type: boolean
+          description: Whether the user is active or not
+          example: true
+    UserCredentialsRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          description: The user's email
+          example: johndoe@example.com
+        password:
+          type: string
+          description: The user's password
+          example: Very$ecureP@ssword
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Login a user
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        200:
+          description: Successful operation
+        401:
+          description: Invalid credentials
+        500:
+          description: Internal server error
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        201:
+          description: Created
+        403:
+          description: Forbidden
+        500:
+          description: Internal server error
+  /auth/logout:
+    delete:
+      tags:
+        - auth
+      summary: Logout a user
+      responses:
+        200:
+          description: Successful operation
+        500:
+          description: Internal server error
+
+  /config:
+    get:
+      tags:
+        - config
+      summary: Get all configurations
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  registerEnabled:
+                    type: boolean
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - config
+      summary: Update a configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigRequest'
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigResponse'
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+        500:
+          description: Internal server error
+
+  /users:
+    get:
+      tags:
+        - users
+      summary: Get users with pagination and search
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Limit number of users returned
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: The current page number for results
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search term to filter users by name
+        - in: query
+          name: role
+          schema:
+            type: string
+          description: Role term to filter users by role
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserResponse'
+                  nextPage:
+                    type: integer
+                    nullable: true
+                  prevPage:
+                    type: integer
+                    nullable: true
+        400:
+          description: Invalid input
+        500:
+          description: Internal server error
+
+    post:
+      tags:
+        - users
+      summary: Create a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreationRequest'
+      responses:
+        201:
+          description: User created
+        400:
+          description: Invalid input
+        500:
+          description: Internal server error
+  /users/{id}:
+    get:
+      tags:
+        - users
+      summary: Get a user by id
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: User ID
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        400:
+          description: Invalid input
+        404:
+          description: User not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - users
+      summary: Update a user
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        200:
+          description: User updated
+        400:
+          description: Invalid input
+        404:
+          description: User not found
+        500:
+          description: Internal server error
+  /users/{id}/credentials:
+    put:
+      tags:
+        - users
+      summary: Update user's email or password
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: User ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCredentialsRequest'
+      responses:
+        200:
+          description: Credentials updated
+        400:
+          description: Invalid input
+        404:
+          description: User not found
+        500:
+          description: Internal server error

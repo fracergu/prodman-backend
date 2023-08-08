@@ -1,4 +1,4 @@
-import { LoginBody, type RegisterBody } from '@models/auth.model'
+import { LoginRequest, type RegisterRequest } from '@models/auth.model'
 import { ConfigurationKeys } from '@models/config.model'
 import { type Context } from '@utils/context'
 import { checkRequiredFields } from '@utils/validation'
@@ -14,7 +14,7 @@ export const login = async (
   ctx: Context
 ): Promise<void> => {
   const authHeader = req.headers.authorization
-  const { rememberMe } = (req.body as LoginBody) || false
+  const { rememberMe } = (req.body as LoginRequest) || false
 
   if (!authHeader || !authHeader.startsWith('Basic ')) {
     res.status(401).json({
@@ -79,7 +79,7 @@ export const register = async (
   }
 
   checkRequiredFields(['name', 'email', 'password'], req.body)
-  const { name, email, lastName, password } = req.body as RegisterBody
+  const { name, email, lastName, password } = req.body as RegisterRequest
   const hashedPassword = bcrypt.hashSync(password, 8)
 
   const user = await ctx.prisma.user.create({

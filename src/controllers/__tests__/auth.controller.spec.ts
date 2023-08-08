@@ -52,7 +52,10 @@ describe('AuthController', () => {
     lastName: 'test',
     email: 'test@test.com',
     role: 'ADMIN',
-    password: bcrypt.hashSync('test', 8)
+    password: bcrypt.hashSync('test', 8),
+    active: true,
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 
   describe('login', () => {
