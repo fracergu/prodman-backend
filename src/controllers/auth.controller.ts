@@ -34,9 +34,9 @@ export const login = async (
   const user = await ctx.prisma.user.findUnique({ where: { email } })
 
   if (user !== null && bcrypt.compareSync(password, user.password)) {
-    if (user.role === 'ADMIN') {
+    if (user.role === 'admin') {
       req.session.cookie.maxAge = rememberMe ? ONE_DAY_MS * 30 : ONE_DAY_MS
-    } else if (user.role === 'USER') {
+    } else if (user.role === 'user') {
       req.session.cookie.maxAge = 1000 * 60
     }
     req.session.user = user.id
@@ -71,7 +71,7 @@ export const register = async (
       lastName,
       email,
       password: hashedPassword,
-      role: 'ADMIN'
+      role: 'admin'
     }
   })
 

@@ -17,7 +17,7 @@ export const requireAdminRole = async (
 
   const user = await ctx.prisma.user.findUnique({ where: { id: userId } })
 
-  if (user == null || user.role !== 'ADMIN') {
+  if (user == null || user.role !== 'admin') {
     return res.status(403).json({ status: 'error', message: 'Forbidden' })
   }
 

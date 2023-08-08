@@ -52,7 +52,7 @@ describe('AuthController', () => {
     name: 'test',
     lastName: 'test',
     email: 'test@test.com',
-    role: 'ADMIN',
+    role: 'admin',
     password: bcrypt.hashSync('test', 8),
     active: true,
     createdAt: new Date(),
@@ -96,7 +96,7 @@ describe('AuthController', () => {
     describe('user is not admin', () => {
       const user: User = {
         ...mockUser,
-        role: 'USER'
+        role: 'user'
       }
 
       it('should set session cookie maxAge to 1 minute', async () => {
@@ -175,7 +175,7 @@ describe('AuthController', () => {
           lastName: 'test',
           email: 'test@test.com',
           password: expect.any(String),
-          role: 'ADMIN'
+          role: 'admin'
         }
       })
 

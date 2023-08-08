@@ -110,7 +110,7 @@ components:
         role:
           type: string
           description: The user's role
-          example: ADMIN
+          example: admin
         active:
           type: boolean
           description: Whether the user is active or not
@@ -129,7 +129,7 @@ components:
         role:
           type: string
           description: The user's role
-          example: ADMIN
+          example: admin
         active:
           type: boolean
           description: Whether the user is active or not
