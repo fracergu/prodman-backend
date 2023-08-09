@@ -23,6 +23,18 @@ function _handleP2002Error(err: PrismaClientKnownRequestError, res: Response) {
   })
 }
 
+function _handleP003Error(err: PrismaClientKnownRequestError, res: Response) {
+  if (err.meta?.target == null)
+    return res
+      .status(400)
+      .json({ status: 'error', message: 'Foreign key constraint failed' })
+  const fields = (err.meta.target as string[]).join(', ')
+  return res.status(400).json({
+    status: 'error',
+    message: `Foreign key constraint failed for fields: ${fields}`
+  })
+}
+
 export const errorHandler = (
   err: ErrorTypes,
   req: Request,
@@ -35,6 +47,8 @@ export const errorHandler = (
         return res.status(404).json({ status: 'error', message: 'Not found' })
       case 'P2002':
         return _handleP2002Error(err, res)
+      case 'P2003':
+        return _handleP003Error(err, res)
       default:
         return res.status(400).json({ status: 'error', message: err.message })
     }
@@ -42,7 +56,9 @@ export const errorHandler = (
 
   if (err instanceof PrismaClientValidationError) {
     const errorMessage = err.message
-    const match = errorMessage.match(/Argument .+ is missing/)
+    const match = errorMessage.match(
+      /Argument .+ is missing|Argument .+ must not be null/
+    )
     const responseMessage = match != null ? match[0] : 'An error occurred'
     return res.status(400).json({ status: 'error', message: responseMessage })
   }

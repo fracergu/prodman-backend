@@ -22,8 +22,10 @@ Table Product {
   description String
   price Decimal
   image String
+  reference String
   createdAt DateTime
   updatedAt DateTime
+  active Boolean
 }
 
 Table ProductComponent {
@@ -37,7 +39,7 @@ Table ProductComponent {
 
 Table Category {
   id Int [pk, increment]
-  name String
+  name String [unique]
   description String
 }
 

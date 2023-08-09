@@ -5,6 +5,7 @@ import yaml from 'yamljs'
 
 import authRoutes from './auth.routes'
 import configRoutes from './config.routes'
+import productRoutes from './products.routes'
 import userRoutes from './users.routes'
 
 const apiRouter = Router()
@@ -17,6 +18,7 @@ export const apiVersion = openApiDocument.info.version as string
 apiRouter.use('/auth', authRoutes)
 apiRouter.use('/config', configRoutes)
 apiRouter.use('/users', userRoutes)
+apiRouter.use('/products', productRoutes)
 apiRouter.use(errorHandler)
 
 // Error handler

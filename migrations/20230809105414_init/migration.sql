@@ -29,8 +29,9 @@ CREATE TABLE "Product" (
     "description" TEXT,
     "price" DECIMAL(65,30) NOT NULL,
     "image" TEXT,
-    "createdAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
 
     CONSTRAINT "Product_pkey" PRIMARY KEY ("id")
 );
@@ -129,6 +130,9 @@ CREATE TABLE "session" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
 
 -- AddForeignKey
 ALTER TABLE "ProductComponent" ADD CONSTRAINT "ProductComponent_parentProduct_fkey" FOREIGN KEY ("parentProduct") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

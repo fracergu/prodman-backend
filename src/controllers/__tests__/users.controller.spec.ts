@@ -65,40 +65,22 @@ describe('UsersController', () => {
 
   describe('getUsers', () => {
     it('should return users with default pagination', async () => {
-      const mockUsers: UserResponse[] = [
-        {
-          id: 1,
-          name: 'John',
-          lastName: 'Doe',
-          email: 'john.doe@example.com',
+      const mockUsersArray: UserResponse[] = Array.from(
+        { length: 3 },
+        (_, i) => ({
+          id: i + 1,
+          name: 'User' + (i + 1),
+          lastName: null,
+          email: 'user' + (i + 1) + '@example.com',
           role: 'user',
           active: true,
           createdAt: new Date(),
           updatedAt: new Date()
-        },
-        {
-          id: 2,
-          name: 'Jane',
-          lastName: 'Doe',
-          email: 'jane.doe@example.com',
-          role: 'user',
-          active: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: 3,
-          name: 'Admin',
-          lastName: 'User',
-          email: 'admin@example.com',
-          role: 'admin',
-          active: true,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ]
+        })
+      )
+
       req = mockRequest({ limit: '1', page: '2' })
-      context.prisma.user.findMany.mockResolvedValue(mockUsers as User[])
+      context.prisma.user.findMany.mockResolvedValue(mockUsersArray as User[])
       await getUsers(req, res, next, context)
       expect(context.prisma.user.findMany).toHaveBeenCalledWith({
         take: 2,
@@ -108,7 +90,7 @@ describe('UsersController', () => {
       })
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith({
-        data: mockUsers,
+        data: mockUsersArray,
         nextPage: 3,
         prevPage: 1
       })
