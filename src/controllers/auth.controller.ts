@@ -24,13 +24,13 @@ export const login = async (
 
   const base64Credentials = authHeader.split(' ')[1]
   const credentials = Buffer.from(base64Credentials, 'base64').toString('utf-8')
-  const [email, password] = credentials.split(':')
+  const [username, password] = credentials.split(':')
 
-  if (email === undefined || password === undefined) {
+  if (username === undefined || password === undefined) {
     throw new RequestError(400, 'Missing or invalid authorization header')
   }
 
-  const user = await ctx.prisma.user.findUnique({ where: { email } })
+  const user = await ctx.prisma.user.findUnique({ where: { username } })
 
   if (user !== null && bcrypt.compareSync(password, user.password)) {
     if (user.role === 'admin') {
@@ -60,14 +60,14 @@ export const register = async (
     throw new RequestError(403, 'Forbidden')
   }
 
-  const { name, email, lastName, password } = req.body as RegisterRequest
+  const { name, username, lastName, password } = req.body as RegisterRequest
   const hashedPassword = bcrypt.hashSync(password, 8)
 
   await ctx.prisma.user.create({
     data: {
       name,
       lastName,
-      email,
+      username,
       password: hashedPassword,
       role: 'admin'
     }

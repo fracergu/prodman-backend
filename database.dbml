@@ -6,7 +6,7 @@ Table Config {
 
 Table User {
   id Int [pk, increment]
-  email String [unique]
+  username String [unique]
   name String
   lastName String
   password String

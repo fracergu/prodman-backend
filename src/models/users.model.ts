@@ -1,7 +1,7 @@
 export interface UserCreationRequest {
   name: string
   lastName?: string
-  email: string
+  username: string
   password: string
   role: string
 }
@@ -10,7 +10,7 @@ export interface UserResponse {
   id: number
   name: string
   lastName: string | null
-  email: string
+  username: string
   role: string
   active: boolean
   createdAt: Date
@@ -26,6 +26,6 @@ export interface UserUpdateRequest {
 
 export interface UserCredentialsRequest {
   currentPassword: string
-  email: string
+  username: string
   password: string
 }

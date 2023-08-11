@@ -49,7 +49,7 @@ describe('UsersController', () => {
     id: true,
     name: true,
     lastName: true,
-    email: true,
+    username: true,
     role: true,
     createdAt: true,
     active: true,
@@ -65,7 +65,7 @@ describe('UsersController', () => {
           id: i + 1,
           name: 'User' + (i + 1),
           lastName: null,
-          email: 'user' + (i + 1) + '@example.com',
+          username: 'user' + (i + 1),
           role: 'user',
           active: true,
           createdAt: new Date(),
@@ -95,7 +95,7 @@ describe('UsersController', () => {
           id: 2,
           name: 'Jane',
           lastName: 'Doe',
-          email: 'jane.doe@example.com',
+          username: 'janedoe1',
           role: 'user',
           active: true,
           createdAt: new Date(),
@@ -125,7 +125,7 @@ describe('UsersController', () => {
           id: 3,
           name: 'Admin',
           lastName: 'User',
-          email: 'admin.user@example.com',
+          username: 'admin1',
           role: 'admin',
           active: true,
           createdAt: new Date(),
@@ -172,7 +172,7 @@ describe('UsersController', () => {
         id: 1,
         name: 'John',
         lastName: 'Doe',
-        email: 'john.doe@example.com',
+        username: 'johndo3',
         role: 'user',
         active: true,
         createdAt: new Date(),
@@ -212,7 +212,7 @@ describe('UsersController', () => {
     it('should create a user', async () => {
       const mockRequestData: UserCreationRequest = {
         name: 'Jane',
-        email: 'jane.doe@example.com',
+        username: 'janedo3',
         password: 'password',
         role: 'user'
       }
@@ -251,7 +251,7 @@ describe('UsersController', () => {
         id: 1,
         name: 'Updated',
         lastName: 'Name',
-        email: 'john.doe@example.com',
+        username: 'johndo3',
         role: 'admin',
         active: true,
         createdAt: new Date(),
@@ -283,17 +283,17 @@ describe('UsersController', () => {
   })
 
   describe('updateUserCredentials', () => {
-    it('should update user email and password', async () => {
+    it('should update user username and password', async () => {
       const credentialsRequest: UserCredentialsRequest = {
         currentPassword: 'password',
-        email: 'updated@example.com',
+        username: 'updated1',
         password: 'newpassword'
       }
       const updatedUser: UserResponse = {
         id: 1,
         name: 'John',
         lastName: 'Doe',
-        email: 'updated@example.com',
+        username: 'updated1',
         role: 'user',
         active: true,
         createdAt: new Date(),
@@ -314,7 +314,7 @@ describe('UsersController', () => {
     it('should throw a 404 if user is not found', async () => {
       const credentialsRequest: UserCredentialsRequest = {
         currentPassword: 'password',
-        email: 'test@test.com',
+        username: 'test1',
         password: 'newpassword'
       }
       req = { params: { id: '1' }, body: credentialsRequest } as any
@@ -328,7 +328,7 @@ describe('UsersController', () => {
     it('should throw a 401 if current password is invalid', async () => {
       const credentialsRequest: UserCredentialsRequest = {
         currentPassword: 'password',
-        email: 'test@test.com',
+        username: 'test1',
         password: 'newpassword'
       }
       req = { params: { id: '1' }, body: credentialsRequest } as any
@@ -341,7 +341,7 @@ describe('UsersController', () => {
       })
     })
 
-    it('should throw a 400 if neither email nor password is provided', async () => {
+    it('should throw a 400 if neither username nor password is provided', async () => {
       req = {
         params: { id: '1' },
         body: { currentPassword: 'password' }
@@ -351,7 +351,7 @@ describe('UsersController', () => {
       } as User)
       await updateUserCredentials(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(RequestError)
-        expect(err.message).toBe('Email or password must be provided')
+        expect(err.message).toBe('Username or password must be provided')
       })
     })
 
@@ -359,7 +359,7 @@ describe('UsersController', () => {
       const credentialsRequest: UserCredentialsRequest = {
         currentPassword: 'password',
         password: 'newpassword',
-        email: 'test@test.com'
+        username: 'test1'
       }
       req = { params: { id: '1' }, body: credentialsRequest } as any
       context.prisma.user.findUnique.mockResolvedValueOnce({

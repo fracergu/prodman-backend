@@ -45,7 +45,7 @@ describe('AuthController', () => {
     id: 1,
     name: 'test',
     lastName: 'test',
-    email: 'test@test.com',
+    username: 'test1',
     role: 'admin',
     password: bcrypt.hashSync('test', 8),
     active: true,
@@ -54,7 +54,7 @@ describe('AuthController', () => {
   }
 
   describe('login', () => {
-    const base64Credentials = btoa(`${mockUser.email}:test`)
+    const base64Credentials = btoa(`${mockUser.username}:test`)
 
     it('should login a user and set session', async () => {
       req.headers.authorization = `Basic ${base64Credentials}`
@@ -133,7 +133,7 @@ describe('AuthController', () => {
     })
 
     it('should throw a 401 if password is incorrect', async () => {
-      const wrongBase64Credentials = btoa(`${mockUser.email}:wrongPassword`)
+      const wrongBase64Credentials = btoa(`${mockUser.username}:wrongPassword`)
       req.headers.authorization = `Basic ${wrongBase64Credentials}`
       req.body = { rememberMe: true }
       context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
@@ -157,7 +157,7 @@ describe('AuthController', () => {
       req.body = {
         name: 'test',
         lastName: 'test',
-        email: 'test@test.com',
+        username: 'test1',
         password: 'test'
       }
 
@@ -167,7 +167,7 @@ describe('AuthController', () => {
         data: {
           name: 'test',
           lastName: 'test',
-          email: 'test@test.com',
+          username: 'test1',
           password: expect.any(String),
           role: 'admin'
         }

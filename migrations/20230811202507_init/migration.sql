@@ -10,7 +10,7 @@ CREATE TABLE "Config" (
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
-    "email" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "lastName" TEXT,
     "password" TEXT NOT NULL,
@@ -131,7 +131,7 @@ CREATE TABLE "session" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Product_reference_key" ON "Product"("reference");

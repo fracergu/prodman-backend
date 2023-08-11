@@ -33,10 +33,10 @@ components:
           type: string
           description: The user's last name
           example: Doe
-        email:
+        username:
           type: string
-          description: The user's email
-          example: johndoe@example.com
+          description: The user's username
+          example: johndo3
         password:
           type: string
           description: The user's password
@@ -68,10 +68,10 @@ components:
     UserCreationRequest:
       type: object
       properties:
-        email:
+        username:
           type: string
-          description: The user's email
-          example: johndoe@example.com
+          description: The user's username
+          example: johndo3
         name:
           type: string
           description: The user's name
@@ -95,10 +95,10 @@ components:
           type: integer
           description: The user's id
           example: 1
-        email:
+        username:
           type: string
-          description: The user's email
-          example: johndoe@example.com
+          description: The user's username
+          example: johndo3
         name:
           type: string
           description: The user's name
@@ -147,10 +147,10 @@ components:
     UserCredentialsRequest:
       type: object
       properties:
-        email:
+        username:
           type: string
-          description: The user's email
-          example: johndoe@example.com
+          description: The user's username
+          example: johndo3
         password:
           type: string
           description: The user's password
@@ -659,7 +659,7 @@ paths:
     put:
       tags:
         - Users
-      summary: Update user's email or password
+      summary: Update user's username or password
       parameters:
         - in: path
           name: id

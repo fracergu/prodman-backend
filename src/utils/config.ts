@@ -47,7 +47,7 @@ export async function mockDevelopmentData() {
     await prisma.user.create({
       data: {
         name: 'root',
-        email: 'root',
+        username: 'root',
         password: await bcrypt.hash('root', 8),
         role: 'admin'
       }
@@ -57,7 +57,7 @@ export async function mockDevelopmentData() {
       await prisma.user.create({
         data: {
           name: `Worker ${i}`,
-          email: `worker${i}`,
+          username: `worker${i}`,
           password: await bcrypt.hash('1234', 8),
           role: 'user'
         }

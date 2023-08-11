@@ -14,7 +14,7 @@ const userSelector = {
   id: true,
   name: true,
   lastName: true,
-  email: true,
+  username: true,
   role: true,
   createdAt: true,
   active: true,
@@ -86,7 +86,7 @@ export const createUser = async (
   res: Response,
   ctx: Context
 ): Promise<void> => {
-  const { name, email, lastName, password, role } =
+  const { name, username, lastName, password, role } =
     req.body as UserCreationRequest
   const hashedPassword = bcrypt.hashSync(password, 8)
 
@@ -94,7 +94,7 @@ export const createUser = async (
     data: {
       name,
       lastName,
-      email,
+      username,
       password: hashedPassword,
       role
     },
@@ -132,12 +132,12 @@ export const updateUserCredentials = async (
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
-  const { currentPassword, password, email } =
+  const { currentPassword, password, username } =
     req.body as UserCredentialsRequest
 
   const updateData: {
     password?: string
-    email?: string
+    username?: string
   } = {}
 
   const findUser = await ctx.prisma.user.findUnique({
@@ -155,12 +155,12 @@ export const updateUserCredentials = async (
     throw new RequestError(401, 'Invalid password')
   }
 
-  if (!isValidString(password) && !isValidString(email)) {
-    throw new RequestError(400, 'Email or password must be provided')
+  if (!isValidString(password) && !isValidString(username)) {
+    throw new RequestError(400, 'Username or password must be provided')
   }
 
-  if (isValidString(email)) {
-    updateData.email = email
+  if (isValidString(username)) {
+    updateData.username = username
   }
 
   if (isValidString(password)) {

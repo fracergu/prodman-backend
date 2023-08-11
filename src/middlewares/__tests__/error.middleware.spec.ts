@@ -48,7 +48,7 @@ describe('ErrorHandler', () => {
         {
           code: 'P2002',
           clientVersion: '2.0.0',
-          meta: { target: ['email'] }
+          meta: { target: ['username'] }
         }
       )
 
@@ -56,7 +56,7 @@ describe('ErrorHandler', () => {
       expect(res.status).toHaveBeenCalledWith(400)
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Unique constraint failed for fields: email'
+        message: 'Unique constraint failed for fields: username'
       })
     })
 
@@ -84,7 +84,7 @@ describe('ErrorHandler', () => {
         {
           code: 'P2003',
           clientVersion: '2.0.0',
-          meta: { target: ['email'] }
+          meta: { target: ['username'] }
         }
       )
 
@@ -92,7 +92,7 @@ describe('ErrorHandler', () => {
       expect(res.status).toHaveBeenCalledWith(400)
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Foreign key constraint failed for fields: email'
+        message: 'Foreign key constraint failed for fields: username'
       })
     })
 
@@ -143,15 +143,18 @@ describe('ErrorHandler', () => {
     })
 
     it('should handle argument missing error', () => {
-      const err = new PrismaClientValidationError('Argument email is missing', {
-        clientVersion: '2.0.0'
-      })
+      const err = new PrismaClientValidationError(
+        'Argument username is missing',
+        {
+          clientVersion: '2.0.0'
+        }
+      )
 
       errorHandler(err, req, res, next)
       expect(res.status).toHaveBeenCalledWith(400)
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
-        message: 'Argument email is missing'
+        message: 'Argument username is missing'
       })
     })
 
