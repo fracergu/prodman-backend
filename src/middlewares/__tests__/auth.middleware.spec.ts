@@ -40,12 +40,12 @@ describe('requireAdminRole Middleware', () => {
   it('should call next if user is admin', async () => {
     req.session = { user: 'valid-user-id' } as any
     context.prisma.user.findUnique.mockResolvedValue({ role: 'admin' } as User)
-    await requireAdminRole(req, res, next, context)
+    await requireAdminRole(req, res, context, next)
     expect(next).toHaveBeenCalled()
   })
 
   it('should return 401 if user is not authenticated', async () => {
-    await requireAdminRole(req, res, next, context)
+    await requireAdminRole(req, res, context, next)
     expect(res.status).toHaveBeenCalledWith(401)
     expect(res.json).toHaveBeenCalledWith({
       status: 'error',
@@ -56,7 +56,7 @@ describe('requireAdminRole Middleware', () => {
   it('should return 403 if user role is not admin', async () => {
     req.session = { user: 'valid-user-id' } as any
     context.prisma.user.findUnique.mockResolvedValue({ role: 'user' } as User)
-    await requireAdminRole(req, res, next, context)
+    await requireAdminRole(req, res, context, next)
     expect(res.status).toHaveBeenCalledWith(403)
     expect(res.json).toHaveBeenCalledWith({
       status: 'error',

@@ -4,8 +4,8 @@ import { type NextFunction, type Request, type Response } from 'express'
 export const requireAdminRole = async (
   req: Request,
   res: Response,
-  next: NextFunction,
-  ctx: Context
+  ctx: Context,
+  next: NextFunction
 ) => {
   const userId = req.session?.user
 

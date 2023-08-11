@@ -6,6 +6,7 @@ import yaml from 'yamljs'
 import authRoutes from './auth.routes'
 import configRoutes from './config.routes'
 import productRoutes from './products.routes'
+import taskRoutes from './tasks.routes'
 import userRoutes from './users.routes'
 
 const apiRouter = Router()
@@ -19,6 +20,7 @@ apiRouter.use('/auth', authRoutes)
 apiRouter.use('/config', configRoutes)
 apiRouter.use('/users', userRoutes)
 apiRouter.use('/products', productRoutes)
+apiRouter.use('/tasks', taskRoutes)
 apiRouter.use(errorHandler)
 
 // Error handler

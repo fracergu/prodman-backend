@@ -9,7 +9,13 @@ import {
   updateProduct
 } from '@controllers/products.controller'
 import { RequestError } from '@exceptions/RequestError'
-import { Category, Prisma, ProductCategory } from '@prisma/client'
+import {
+  mockCategory,
+  mockProductCategory,
+  mockProductsArray,
+  mockProductsParsedArray
+} from '@mocks/products.mock'
+import { Category } from '@prisma/client'
 import { MockContext, createMockContext } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
 
@@ -17,7 +23,6 @@ describe('ProductsController', () => {
   let context: MockContext
   let req: Request
   let res: Response
-  let next: NextFunction
 
   const mockRequest = (query: Partial<Request['query']> = {}) => {
     return { query } as any
@@ -33,10 +38,6 @@ describe('ProductsController', () => {
     return res as Response
   }
 
-  const mockNext = () => {
-    return jest.fn() as NextFunction
-  }
-
   beforeEach(() => {
     context = createMockContext()
     req = mockRequest({
@@ -47,202 +48,16 @@ describe('ProductsController', () => {
       headers: {}
     })
     res = mockResponse()
-    next = mockNext()
   })
 
   afterEach(() => {
     jest.clearAllMocks()
   })
 
-  const mockCategory: Category = {
-    id: 1,
-    name: 'test',
-    description: 'test'
-  }
-
-  const mockProductsArray: any = [
-    {
-      id: 5,
-      name: 'Product 1',
-      description: 'Product 1 description',
-      price: new Prisma.Decimal(10.99),
-      image: null,
-      reference: '00000',
-      createdAt: new Date('2023-08-09T11:08:36.434Z'),
-      updatedAt: new Date('2023-08-09T11:08:36.434Z'),
-      active: true,
-      ProductCategories: [],
-      ProductComponents: []
-    },
-    {
-      id: 6,
-      name: 'Product 2',
-      description: 'Product 2 description',
-      price: new Prisma.Decimal(10.99),
-      image: null,
-      reference: '00001',
-      createdAt: new Date('2023-08-09T11:09:10.524Z'),
-      updatedAt: new Date('2023-08-09T11:09:10.524Z'),
-      active: true,
-      ProductCategories: [],
-      ProductComponents: [
-        {
-          id: 1,
-          parentProduct: 6,
-          childProduct: 5,
-          quantity: 2,
-          Child: {
-            id: 5,
-            name: 'Product 1',
-            description: 'Product 1 description',
-            price: new Prisma.Decimal(10.99),
-            image: null,
-            reference: '00000',
-            createdAt: new Date('2023-08-09T11:08:36.434Z'),
-            updatedAt: new Date('2023-08-09T11:08:36.434Z'),
-            active: true
-          }
-        }
-      ]
-    },
-    {
-      id: 7,
-      name: 'Product 3',
-      description: 'Product 3 description',
-      price: new Prisma.Decimal(10.99),
-      image: null,
-      reference: '00002',
-      createdAt: new Date('2023-08-09T11:11:56.436Z'),
-      updatedAt: new Date('2023-08-09T11:11:56.436Z'),
-      active: true,
-      ProductCategories: [
-        {
-          id: 5,
-          product: 7,
-          category: 1,
-          Category: {
-            id: 1,
-            name: 'Category 1',
-            description: 'Category 1 description'
-          }
-        }
-      ],
-      ProductComponents: [
-        {
-          id: 2,
-          parentProduct: 7,
-          childProduct: 6,
-          quantity: 5,
-          Child: {
-            id: 6,
-            name: 'Product 2',
-            description: 'Product 2 description',
-            price: new Prisma.Decimal(10.99),
-            image: null,
-            reference: '00001',
-            createdAt: new Date('2023-08-09T11:09:10.524Z'),
-            updatedAt: new Date('2023-08-09T11:09:10.524Z'),
-            active: true
-          }
-        }
-      ]
-    }
-  ]
-
-  const mockProductsParsedArray: any = [
-    {
-      id: 5,
-      name: 'Product 1',
-      description: 'Product 1 description',
-      price: new Prisma.Decimal(10.99),
-      image: null,
-      createdAt: new Date('2023-08-09T11:08:36.434Z'),
-      updatedAt: new Date('2023-08-09T11:08:36.434Z'),
-      active: true,
-      reference: '00000',
-      categories: [],
-      components: [],
-      ProductCategories: undefined,
-      ProductComponents: undefined
-    },
-    {
-      id: 6,
-      name: 'Product 2',
-      description: 'Product 2 description',
-      price: new Prisma.Decimal(10.99),
-      image: null,
-      createdAt: new Date('2023-08-09T11:09:10.524Z'),
-      updatedAt: new Date('2023-08-09T11:09:10.524Z'),
-      active: true,
-      reference: '00001',
-      categories: [],
-      components: [
-        {
-          quantity: 2,
-          product: {
-            id: 5,
-            name: 'Product 1',
-            description: 'Product 1 description',
-            price: new Prisma.Decimal(10.99),
-            image: null,
-            reference: '00000',
-            createdAt: new Date('2023-08-09T11:08:36.434Z'),
-            updatedAt: new Date('2023-08-09T11:08:36.434Z'),
-            active: true
-          }
-        }
-      ],
-      ProductCategories: undefined,
-      ProductComponents: undefined
-    },
-    {
-      id: 7,
-      name: 'Product 3',
-      description: 'Product 3 description',
-      price: new Prisma.Decimal(10.99),
-      image: null,
-      createdAt: new Date('2023-08-09T11:11:56.436Z'),
-      updatedAt: new Date('2023-08-09T11:11:56.436Z'),
-      active: true,
-      reference: '00002',
-      categories: [
-        {
-          id: 1,
-          name: 'Category 1',
-          description: 'Category 1 description'
-        }
-      ],
-      components: [
-        {
-          quantity: 5,
-          product: {
-            id: 6,
-            name: 'Product 2',
-            description: 'Product 2 description',
-            price: new Prisma.Decimal(10.99),
-            image: null,
-            reference: '00001',
-            createdAt: new Date('2023-08-09T11:09:10.524Z'),
-            updatedAt: new Date('2023-08-09T11:09:10.524Z'),
-            active: true
-          }
-        }
-      ],
-      ProductCategories: undefined,
-      ProductComponents: undefined
-    }
-  ]
-
-  const mockProductCategory: ProductCategory = {
-    id: 1,
-    product: 1,
-    category: 1
-  }
-
   describe('getCategories', () => {
     it('should return all products categories', async () => {
       context.prisma.category.findMany.mockResolvedValue([mockCategory])
-      await getCategories(req, res, next, context)
+      await getCategories(req, res, context)
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith([mockCategory])
     })
@@ -252,7 +67,7 @@ describe('ProductsController', () => {
     it('should create a product category', async () => {
       req.body = { name: 'test', description: 'test' }
       context.prisma.category.create.mockResolvedValue(mockCategory)
-      await createCategory(req, res, next, context)
+      await createCategory(req, res, context)
       expect(res.status).toHaveBeenCalledWith(201)
       expect(res.json).toHaveBeenCalledWith(mockCategory)
     })
@@ -268,7 +83,7 @@ describe('ProductsController', () => {
       req.params = { id: '1' }
       req.body = { name: 'updated', description: 'updated' }
       context.prisma.category.update.mockResolvedValue(mockUpdatedCategory)
-      await updateCategory(req, res, next, context)
+      await updateCategory(req, res, context)
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(mockUpdatedCategory)
     })
@@ -278,7 +93,7 @@ describe('ProductsController', () => {
     it('should delete a product category', async () => {
       req.params = { id: '1' }
       context.prisma.category.delete.mockResolvedValue(mockCategory)
-      await deleteCategory(req, res, next, context)
+      await deleteCategory(req, res, context)
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(mockCategory)
     })
@@ -304,7 +119,7 @@ describe('ProductsController', () => {
         mockProductsArray[1],
         mockProductsArray[2]
       ])
-      await getProducts(req, res, next, context)
+      await getProducts(req, res, context)
       expect(context.prisma.product.findMany).toHaveBeenCalledWith({
         take: 2,
         skip: 1,
@@ -322,7 +137,7 @@ describe('ProductsController', () => {
     it('should return parsed products with search', async () => {
       req = mockRequest({ limit: '1', page: '1', search: 'Product 1' })
       context.prisma.product.findMany.mockResolvedValue([mockProductsArray[0]])
-      await getProducts(req, res, next, context)
+      await getProducts(req, res, context)
       expect(context.prisma.product.findMany).toHaveBeenCalledWith({
         take: 2,
         skip: 0,
@@ -338,13 +153,19 @@ describe('ProductsController', () => {
     })
 
     it('should return parsed products with category', async () => {
-      req = mockRequest({ limit: '1', page: '1', categoryId: '1' })
+      req = mockRequest({ limit: '1', page: '1', category: '1' })
       context.prisma.product.findMany.mockResolvedValue([mockProductsArray[2]])
-      await getProducts(req, res, next, context)
+      await getProducts(req, res, context)
       expect(context.prisma.product.findMany).toHaveBeenCalledWith({
         take: 2,
         skip: 0,
-        where: { categoryId: 1 },
+        where: {
+          ProductCategories: {
+            some: {
+              categoryId: 1
+            }
+          }
+        },
         include
       })
       expect(res.status).toHaveBeenCalledWith(200)
@@ -358,7 +179,7 @@ describe('ProductsController', () => {
     it('should throw a 404 if no products are found', async () => {
       req = mockRequest({ limit: '1', page: '1' })
       context.prisma.product.findMany.mockResolvedValue([])
-      await getProducts(req, res, next, context).catch(err => {
+      await getProducts(req, res, context).catch(err => {
         expect(err).toEqual(new RequestError(404, 'Not found'))
       })
     })
@@ -381,7 +202,7 @@ describe('ProductsController', () => {
     it('should return a parsed product', async () => {
       req.params = { id: '6' }
       context.prisma.product.findUnique.mockResolvedValue(mockProductsArray[1])
-      await getProduct(req, res, next, context)
+      await getProduct(req, res, context)
       expect(context.prisma.product.findUnique).toHaveBeenCalledWith({
         where: { id: 6 },
         include
@@ -393,7 +214,7 @@ describe('ProductsController', () => {
     it('should throw a 404 if product is not found', async () => {
       req.params = { id: '1' }
       context.prisma.product.findUnique.mockResolvedValue(null)
-      await getProduct(req, res, next, context).catch(err => {
+      await getProduct(req, res, context).catch(err => {
         expect(err).toEqual(new RequestError(404, 'Not found'))
       })
     })
@@ -414,7 +235,7 @@ describe('ProductsController', () => {
       context.prisma.productCategory.create.mockResolvedValue(
         mockProductCategory
       )
-      await createProduct(req, res, next, context)
+      await createProduct(req, res, context)
       expect(res.status).toHaveBeenCalledWith(201)
       expect(res.json).toHaveBeenCalledWith(mockProductsParsedArray[2])
     })
@@ -428,7 +249,7 @@ describe('ProductsController', () => {
         active: true
       }
       context.prisma.product.create.mockResolvedValue(mockProductsArray[0])
-      await createProduct(req, res, next, context)
+      await createProduct(req, res, context)
       expect(res.status).toHaveBeenCalledWith(201)
       expect(res.json).toHaveBeenCalledWith(mockProductsParsedArray[0])
     })
@@ -450,7 +271,7 @@ describe('ProductsController', () => {
       context.prisma.productCategory.create.mockResolvedValue(
         mockProductCategory
       )
-      await updateProduct(req, res, next, context)
+      await updateProduct(req, res, context)
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(mockProductsParsedArray[2])
     })
@@ -465,7 +286,7 @@ describe('ProductsController', () => {
         active: true
       }
       context.prisma.product.update.mockResolvedValue(mockProductsArray[0])
-      await updateProduct(req, res, next, context)
+      await updateProduct(req, res, context)
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(mockProductsParsedArray[0])
     })
@@ -476,7 +297,7 @@ describe('ProductsController', () => {
     req.body = {
       components: [{ productId: 7, quantity: 5 }]
     }
-    await updateProduct(req, res, next, context).catch(err => {
+    await updateProduct(req, res, context).catch(err => {
       expect(err).toEqual(
         new RequestError(400, 'Product cannot be a component of itself')
       )

@@ -8,7 +8,7 @@ import {
 import { type Context } from '@utils/context'
 import { getIntegerParam, isValidString } from '@utils/validation'
 import bcrypt from 'bcrypt'
-import { type NextFunction, type Request, type Response } from 'express'
+import { type Request, type Response } from 'express'
 
 const userSelector = {
   id: true,
@@ -25,7 +25,6 @@ const userSelector = {
 export const getUsers = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const limit = getIntegerParam(req.query.limit as string, 10)
@@ -67,7 +66,6 @@ export const getUsers = async (
 export const getUser = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
@@ -86,7 +84,6 @@ export const getUser = async (
 export const createUser = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { name, email, lastName, password, role } =
@@ -110,7 +107,6 @@ export const createUser = async (
 export const updateUser = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
@@ -133,7 +129,6 @@ export const updateUser = async (
 export const updateUserCredentials = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params

@@ -15,7 +15,8 @@
       "@models/*": ["src/models/*"],
       "@routes/*": ["src/routes/*"],
       "@utils/*": ["src/utils/*"],
-      "@middlewares/*": ["src/middlewares/*"]
+      "@middlewares/*": ["src/middlewares/*"],
+      "@mocks/*": ["src/mocks/*"]
     },
     "declaration": true
   },

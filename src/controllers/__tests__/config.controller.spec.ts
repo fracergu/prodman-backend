@@ -16,8 +16,6 @@ describe('ConfigController', () => {
   let req: Request
   let res: Response
 
-  let next: NextFunction
-
   const mockRequest = (data: Partial<Request> = {}) => {
     return data as Request
   }
@@ -32,10 +30,6 @@ describe('ConfigController', () => {
     return res as Response
   }
 
-  const mockNext = () => {
-    return jest.fn() as NextFunction
-  }
-
   beforeEach(() => {
     context = createMockContext()
     req = mockRequest({
@@ -46,7 +40,6 @@ describe('ConfigController', () => {
       headers: {}
     })
     res = mockResponse()
-    next = mockNext()
   })
 
   afterEach(() => {
@@ -66,7 +59,7 @@ describe('ConfigController', () => {
   describe('getConfigurations', () => {
     it('should return configurations', async () => {
       context.prisma.config.findMany.mockResolvedValue(mockConfig)
-      await getConfigurations(req, res, next, context)
+      await getConfigurations(req, res, context)
       expect(context.prisma.config.findMany).toHaveBeenCalled()
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(parsedMockConfig)
@@ -80,7 +73,7 @@ describe('ConfigController', () => {
         key: ConfigurationKeys.REGISTER_ENABLED,
         value: false
       }
-      await updateConfigurations(req, res, next, context)
+      await updateConfigurations(req, res, context)
       expect(context.prisma.config.update).toHaveBeenCalled()
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(parsedMockConfig)
@@ -91,7 +84,7 @@ describe('ConfigController', () => {
         key: 'INVALID_KEY',
         value: false
       }
-      await updateConfigurations(req, res, next, context).catch(err => {
+      await updateConfigurations(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(RequestError)
         expect(err.statusCode).toBe(400)
         expect(err.message).toBe('Invalid configuration key')

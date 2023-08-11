@@ -303,6 +303,133 @@ components:
                 type: integer
                 description: The quantity of the component
                 example: 3
+    TaskListResponse:
+      type: 'object'
+      properties:
+        data:
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/TaskListItem'
+        nextPage:
+          type: 'integer'
+          nullable: true
+          example: null
+        prevPage:
+          type: 'integer'
+          nullable: true
+          example: null
+
+    TaskResponse:
+      type: 'object'
+      properties:
+        data:
+          $ref: '#/components/schemas/TaskItem'
+
+    TaskListItem:
+      type: 'object'
+      properties:
+        id:
+          type: 'integer'
+          example: 1
+        userName:
+          type: 'string'
+          example: 'John Doe'
+        percentageCompleted:
+          type: 'number'
+          example: 0.5
+        createdAt:
+          type: 'string'
+          format: 'date-time'
+          example: '2021-01-01T00:00:00.000Z'
+        notes:
+          type: 'string'
+          example: 'Some notes'
+        subtasks:
+          type: 'integer'
+          example: 2
+
+    TaskItem:
+      type: 'object'
+      properties:
+        id:
+          type: 'integer'
+        user:
+          $ref: '#/components/schemas/UserResponse'
+        percentageCompleted:
+          type: 'number'
+        createdAt:
+          type: 'string'
+          format: 'date-time'
+        subTasks:
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/SubTask'
+    TaskCreateRequest:
+      type: 'object'
+      properties:
+        notes:
+          type: 'string'
+          example: 'Some notes'
+        userId:
+          type: 'integer'
+          example: 1
+        status:
+          type: 'string'
+          enum: ['pending', 'completed', 'cancelled']
+          example: 'pending'
+        subTasks:
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/SubTaskCreateRequest'
+
+    SubTaskCreateRequest:
+      type: 'object'
+      properties:
+        productId:
+          type: 'integer'
+          example: 1
+        quantity:
+          type: 'integer'
+          example: 1
+        notes:
+          type: 'string'
+          example: 'Some notes'
+        status:
+          type: 'string'
+          enum: ['pending', 'completed', 'cancelled']
+          example: 'pending'
+
+    SubTask:
+      type: 'object'
+      properties:
+        id:
+          type: 'integer'
+        name:
+          type: 'string'
+        completed:
+          type: 'boolean'
+        product:
+          $ref: '#/components/schemas/ProductResponse'
+        quantity:
+          type: 'integer'
+        status:
+          type: 'string'
+          enum: ['pending', 'completed', 'cancelled']
+        events:
+          type: 'array'
+          items:
+            $ref: '#/components/schemas/SubTaskEvent'
+
+    SubTaskEvent:
+      type: 'object'
+      properties:
+        id:
+          type: 'integer'
+        date:
+          type: 'string'
+          format: 'date-time'
+        quantityCompleted:
+          type: 'integer'
 
 paths:
   /auth/login:
@@ -442,9 +569,11 @@ paths:
                   nextPage:
                     type: integer
                     nullable: true
+                    example: null
                   prevPage:
                     type: integer
                     nullable: true
+                    example: null
         400:
           description: Invalid input
         500:
@@ -780,3 +909,123 @@ paths:
           description: Product not found
         500:
           description: Internal server error
+  /tasks:
+    get:
+      summary: 'Get tasks with optional filters'
+      tags:
+        - 'Tasks'
+      parameters:
+        - name: 'limit'
+          in: 'query'
+          required: false
+          schema:
+            type: 'integer'
+            default: 10
+        - name: 'page'
+          in: 'query'
+          required: false
+          schema:
+            type: 'integer'
+            default: 1
+        - name: 'userId'
+          in: 'query'
+          required: false
+          schema:
+            type: 'string'
+        - name: 'completed'
+          in: 'query'
+          required: false
+          schema:
+            type: 'string'
+        - name: 'startDate'
+          in: 'query'
+          required: false
+          schema:
+            type: 'string'
+            format: 'date'
+      responses:
+        '200':
+          description: 'Successful response'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+        '404':
+          description: 'Not found'
+
+    post:
+      tags:
+        - 'Tasks'
+      summary: 'Create a new task'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '201':
+          description: 'Task created successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+  /tasks/{taskId}:
+    get:
+      tags:
+        - 'Tasks'
+      summary: 'Get a single task by ID'
+      parameters:
+        - name: 'taskId'
+          in: 'path'
+          required: true
+          schema:
+            type: 'integer'
+      responses:
+        '200':
+          description: 'Successful response'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '404':
+          description: 'Task not found'
+
+    put:
+      tags:
+        - 'Tasks'
+      summary: 'Update a task by ID'
+      parameters:
+        - name: 'taskId'
+          in: 'path'
+          required: true
+          schema:
+            type: 'integer'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '200':
+          description: 'Task updated successfully'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+
+    delete:
+      tags:
+        - 'Tasks'
+      summary: 'Delete a task by ID'
+      parameters:
+        - name: 'taskId'
+          in: 'path'
+          required: true
+          schema:
+            type: 'integer'
+      responses:
+        '204':
+          description: 'Task deleted successfully'

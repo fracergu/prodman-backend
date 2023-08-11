@@ -34,6 +34,14 @@ describe('ErrorHandler', () => {
   })
 
   describe('errorHandler', () => {
+    it('shoud console.error the error if DEVELOPMENT is true', () => {
+      console.error = jest.fn()
+      const err = new Error('Test error')
+      process.env.DEVELOPMENT = 'true'
+      errorHandler(err, req, res, next)
+      expect(console.error).toHaveBeenCalledWith(err)
+    })
+
     it('should handle unique constraint error with target', () => {
       const err = new PrismaClientKnownRequestError(
         'Unique constraint failed on the fields',
@@ -67,6 +75,42 @@ describe('ErrorHandler', () => {
       expect(res.json).toHaveBeenCalledWith({
         status: 'error',
         message: 'Unique constraint failed'
+      })
+    })
+
+    it('should handle foreign key constraint error with target', () => {
+      const err = new PrismaClientKnownRequestError(
+        'Foreign key constraint failed on the fields',
+        {
+          code: 'P2003',
+          clientVersion: '2.0.0',
+          meta: { target: ['email'] }
+        }
+      )
+
+      errorHandler(err, req, res, next)
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Foreign key constraint failed for fields: email'
+      })
+    })
+
+    it('should handle foreign key constraint error without target', () => {
+      const err = new PrismaClientKnownRequestError(
+        'Foreign key constraint failed on the fields',
+        {
+          code: 'P2003',
+          clientVersion: '2.0.0',
+          meta: { target: null }
+        }
+      )
+
+      errorHandler(err, req, res, next)
+      expect(res.status).toHaveBeenCalledWith(400)
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Foreign key constraint failed'
       })
     })
 

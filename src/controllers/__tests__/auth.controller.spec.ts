@@ -10,7 +10,6 @@ describe('AuthController', () => {
   let context: MockContext
   let req: Request
   let res: Response
-  let next: NextFunction
 
   const mockRequest = (data: Partial<Request> = {}) => {
     return data as Request
@@ -26,10 +25,6 @@ describe('AuthController', () => {
     return res as Response
   }
 
-  const mockNext = () => {
-    return jest.fn() as NextFunction
-  }
-
   beforeEach(() => {
     context = createMockContext()
     req = mockRequest({
@@ -40,7 +35,6 @@ describe('AuthController', () => {
       headers: {}
     })
     res = mockResponse()
-    next = mockNext()
   })
 
   afterEach(() => {
@@ -66,7 +60,7 @@ describe('AuthController', () => {
       req.headers.authorization = `Basic ${base64Credentials}`
       req.body = { rememberMe: true }
       context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
-      await login(req, res, next, context)
+      await login(req, res, context)
       expect(res.status).toHaveBeenCalledWith(200)
       expect(req.session.user).toEqual(mockUser.id)
     })
@@ -76,7 +70,7 @@ describe('AuthController', () => {
         req.headers.authorization = `Basic ${base64Credentials}`
         req.body = { rememberMe: true }
         context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
-        await login(req, res, next, context)
+        await login(req, res, context)
         expect(res.status).toHaveBeenCalledWith(200)
         expect(req.session.cookie.maxAge).toEqual(1000 * 60 * 60 * 24 * 30)
         expect(req.session.user).toEqual(mockUser.id)
@@ -86,7 +80,7 @@ describe('AuthController', () => {
         req.headers.authorization = `Basic ${base64Credentials}`
         req.body = { rememberMe: false }
         context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
-        await login(req, res, next, context)
+        await login(req, res, context)
         expect(res.status).toHaveBeenCalledWith(200)
         expect(req.session.cookie.maxAge).toEqual(1000 * 60 * 60 * 24)
         expect(req.session.user).toEqual(mockUser.id)
@@ -103,7 +97,7 @@ describe('AuthController', () => {
         req.headers.authorization = `Basic ${base64Credentials}`
         req.body = { rememberMe: true }
         context.prisma.user.findUnique.mockResolvedValueOnce(user)
-        await login(req, res, next, context)
+        await login(req, res, context)
         expect(res.status).toHaveBeenCalledWith(200)
         expect(req.session.cookie.maxAge).toEqual(1000 * 60)
         expect(req.session.user).toEqual(user.id)
@@ -111,7 +105,7 @@ describe('AuthController', () => {
     })
 
     it('should throw a 400 if authorization header is missing', async () => {
-      await login(req, res, next, context).catch(err => {
+      await login(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(RequestError)
         expect(err.statusCode).toEqual(400)
         expect(err.message).toEqual('Missing or invalid authorization header')
@@ -120,7 +114,7 @@ describe('AuthController', () => {
 
     it('should throw a 400 if authorization header is invalid', async () => {
       req.headers.authorization = `Basic ${btoa('invalid')}`
-      await login(req, res, next, context).catch(err => {
+      await login(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(RequestError)
         expect(err.statusCode).toEqual(400)
         expect(err.message).toEqual('Missing or invalid authorization header')
@@ -131,7 +125,7 @@ describe('AuthController', () => {
       req.headers.authorization = `Basic ${base64Credentials}`
       req.body = { rememberMe: true }
       context.prisma.user.findUnique.mockResolvedValueOnce(null)
-      await login(req, res, next, context).catch(err => {
+      await login(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(RequestError)
         expect(err.statusCode).toEqual(401)
         expect(err.message).toEqual('Invalid credentials')
@@ -143,7 +137,7 @@ describe('AuthController', () => {
       req.headers.authorization = `Basic ${wrongBase64Credentials}`
       req.body = { rememberMe: true }
       context.prisma.user.findUnique.mockResolvedValueOnce(mockUser)
-      await login(req, res, next, context).catch(err => {
+      await login(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(RequestError)
         expect(err.statusCode).toEqual(401)
         expect(err.message).toEqual('Invalid credentials')
@@ -167,7 +161,7 @@ describe('AuthController', () => {
         password: 'test'
       }
 
-      await register(req, res, next, context)
+      await register(req, res, context)
 
       expect(context.prisma.user.create).toHaveBeenCalledWith({
         data: {
@@ -188,7 +182,7 @@ describe('AuthController', () => {
         type: 'boolean',
         value: 'false'
       })
-      await register(req, res, next, context).catch(err => {
+      await register(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(RequestError)
         expect(err.statusCode).toEqual(403)
         expect(err.message).toEqual('Forbidden')
@@ -202,7 +196,7 @@ describe('AuthController', () => {
       jest.spyOn(req.session, 'destroy')
       jest.spyOn(res, 'clearCookie')
       jest.spyOn(res, 'status')
-      await logout(req, res, next, context)
+      await logout(req, res)
       expect(req.session.destroy).toHaveBeenCalled()
       expect(res.clearCookie).toHaveBeenCalledWith('sid')
       expect(res.status).toHaveBeenCalledWith(200)

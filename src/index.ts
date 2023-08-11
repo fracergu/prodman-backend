@@ -1,4 +1,7 @@
-import { initializeDefaultConfigurations } from '@utils/config'
+import {
+  initializeDefaultConfigurations,
+  mockDevelopmentData
+} from '@utils/config'
 import genFunc from 'connect-pg-simple'
 import dotenv from 'dotenv'
 import express, { type Express } from 'express'
@@ -39,9 +42,17 @@ app.use(`/api/v${apiVersion}`, apiRouter)
 
 initializeDefaultConfigurations()
   .then(() => {
-    app.listen(port, () => {
-      console.log(`⚡️[server]: Server is running at http://localhost:${port}`)
-    })
+    mockDevelopmentData()
+      .then(() => {
+        app.listen(port, () => {
+          console.log(
+            `⚡️[server]: Server is running at http://localhost:${port}`
+          )
+        })
+      })
+      .catch(err => {
+        throw err
+      })
   })
   .catch(err => {
     console.error('Error initializing default configurations: ', err)

@@ -29,6 +29,7 @@ CREATE TABLE "Product" (
     "description" TEXT,
     "price" DECIMAL(65,30) NOT NULL,
     "image" TEXT,
+    "reference" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "active" BOOLEAN NOT NULL DEFAULT true,
@@ -39,9 +40,9 @@ CREATE TABLE "Product" (
 -- CreateTable
 CREATE TABLE "ProductComponent" (
     "id" SERIAL NOT NULL,
-    "parentProduct" INTEGER NOT NULL,
-    "childProduct" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL,
+    "parentId" INTEGER NOT NULL,
+    "childId" INTEGER NOT NULL,
 
     CONSTRAINT "ProductComponent_pkey" PRIMARY KEY ("id")
 );
@@ -58,8 +59,8 @@ CREATE TABLE "Category" (
 -- CreateTable
 CREATE TABLE "ProductCategory" (
     "id" SERIAL NOT NULL,
-    "product" INTEGER NOT NULL,
-    "category" INTEGER NOT NULL,
+    "productId" INTEGER NOT NULL,
+    "categoryId" INTEGER NOT NULL,
 
     CONSTRAINT "ProductCategory_pkey" PRIMARY KEY ("id")
 );
@@ -67,10 +68,10 @@ CREATE TABLE "ProductCategory" (
 -- CreateTable
 CREATE TABLE "StockMovement" (
     "id" SERIAL NOT NULL,
-    "product" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
-    "user" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "productId" INTEGER NOT NULL,
 
     CONSTRAINT "StockMovement_pkey" PRIMARY KEY ("id")
 );
@@ -78,9 +79,10 @@ CREATE TABLE "StockMovement" (
 -- CreateTable
 CREATE TABLE "Task" (
     "id" SERIAL NOT NULL,
-    "worker" INTEGER NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "notes" TEXT,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "userId" INTEGER NOT NULL,
 
     CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
 );
@@ -88,11 +90,11 @@ CREATE TABLE "Task" (
 -- CreateTable
 CREATE TABLE "SubTask" (
     "id" SERIAL NOT NULL,
-    "task" INTEGER NOT NULL,
-    "product" INTEGER NOT NULL,
     "quantity" INTEGER NOT NULL,
-    "status" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'pending',
     "notes" TEXT,
+    "taskId" INTEGER NOT NULL,
+    "productId" INTEGER NOT NULL,
 
     CONSTRAINT "SubTask_pkey" PRIMARY KEY ("id")
 );
@@ -100,7 +102,7 @@ CREATE TABLE "SubTask" (
 -- CreateTable
 CREATE TABLE "SubTaskEvent" (
     "id" SERIAL NOT NULL,
-    "subtask" INTEGER NOT NULL,
+    "subtaskId" INTEGER NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
     "quantityCompleted" INTEGER NOT NULL,
 
@@ -114,7 +116,7 @@ CREATE TABLE "Log" (
     "rowId" INTEGER NOT NULL,
     "action" TEXT NOT NULL,
     "date" TIMESTAMP(3) NOT NULL,
-    "user" INTEGER NOT NULL,
+    "userId" INTEGER NOT NULL,
 
     CONSTRAINT "Log_pkey" PRIMARY KEY ("id")
 );
@@ -132,37 +134,40 @@ CREATE TABLE "session" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Product_reference_key" ON "Product"("reference");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Category_name_key" ON "Category"("name");
 
 -- AddForeignKey
-ALTER TABLE "ProductComponent" ADD CONSTRAINT "ProductComponent_parentProduct_fkey" FOREIGN KEY ("parentProduct") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductComponent" ADD CONSTRAINT "ProductComponent_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductComponent" ADD CONSTRAINT "ProductComponent_childProduct_fkey" FOREIGN KEY ("childProduct") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductComponent" ADD CONSTRAINT "ProductComponent_childId_fkey" FOREIGN KEY ("childId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_product_fkey" FOREIGN KEY ("product") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_category_fkey" FOREIGN KEY ("category") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ProductCategory" ADD CONSTRAINT "ProductCategory_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_user_fkey" FOREIGN KEY ("user") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_product_fkey" FOREIGN KEY ("product") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Task" ADD CONSTRAINT "Task_worker_fkey" FOREIGN KEY ("worker") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Task" ADD CONSTRAINT "Task_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SubTask" ADD CONSTRAINT "SubTask_task_fkey" FOREIGN KEY ("task") REFERENCES "Task"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SubTask" ADD CONSTRAINT "SubTask_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SubTask" ADD CONSTRAINT "SubTask_product_fkey" FOREIGN KEY ("product") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SubTask" ADD CONSTRAINT "SubTask_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SubTaskEvent" ADD CONSTRAINT "SubTaskEvent_subtask_fkey" FOREIGN KEY ("subtask") REFERENCES "SubTask"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "SubTaskEvent" ADD CONSTRAINT "SubTaskEvent_subtaskId_fkey" FOREIGN KEY ("subtaskId") REFERENCES "SubTask"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Log" ADD CONSTRAINT "Log_user_fkey" FOREIGN KEY ("user") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Log" ADD CONSTRAINT "Log_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

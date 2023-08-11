@@ -3,14 +3,13 @@ import { type RegisterRequest } from '@models/auth.model'
 import { ConfigurationKeys } from '@models/config.model'
 import { type Context } from '@utils/context'
 import bcrypt from 'bcrypt'
-import { type NextFunction, type Request, type Response } from 'express'
+import { type Request, type Response } from 'express'
 
 const ONE_DAY_MS = 1000 * 60 * 60 * 24
 
 export const login = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const authHeader = req.headers.authorization
@@ -49,7 +48,6 @@ export const login = async (
 export const register = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const config = await ctx.prisma.config.findUnique({
@@ -78,12 +76,7 @@ export const register = async (
   res.status(201).send()
 }
 
-export const logout = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-  ctx: Context
-): Promise<void> => {
+export const logout = async (req: Request, res: Response): Promise<void> => {
   req.session.destroy(() => {
     res.clearCookie('sid')
     res.status(200).send()

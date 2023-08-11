@@ -10,12 +10,11 @@ import {
   parseConfigurationValue
 } from '@utils/config'
 import { type Context } from '@utils/context'
-import { type NextFunction, type Request, type Response } from 'express'
+import { type Request, type Response } from 'express'
 
 export const getConfigurations = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const config = (await ctx.prisma.config.findMany()) as DatabaseConfig[]
@@ -25,7 +24,6 @@ export const getConfigurations = async (
 export const updateConfigurations = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { key, value } = req.body as ConfigRequest

@@ -41,6 +41,10 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  if (process.env.DEVELOPMENT === 'true') {
+    console.error(err)
+  }
+
   if (err instanceof PrismaClientKnownRequestError) {
     switch (err.code) {
       case 'P2025':

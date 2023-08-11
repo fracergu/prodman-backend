@@ -24,8 +24,8 @@ export const withContext = (fn: any) => {
   return (
     req: express.Request,
     res: express.Response,
-    next: express.NextFunction
+    next?: express.NextFunction
   ) => {
-    fn(req, res, next, context).catch(next)
+    fn(req, res, context, next).catch(next)
   }
 }

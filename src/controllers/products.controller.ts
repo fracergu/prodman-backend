@@ -5,12 +5,11 @@ import {
 } from '@models/products.model'
 import { type Context } from '@utils/context'
 import { getIntegerParam, isValidString } from '@utils/validation'
-import { type NextFunction, type Request, type Response } from 'express'
+import { type Request, type Response } from 'express'
 
 export const getCategories = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const categories = await ctx.prisma.category.findMany()
@@ -20,7 +19,6 @@ export const getCategories = async (
 export const createCategory = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { name, description } = req.body as CategoryCreationRequest
@@ -36,7 +34,6 @@ export const createCategory = async (
 export const updateCategory = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
@@ -56,7 +53,6 @@ export const updateCategory = async (
 export const deleteCategory = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
@@ -86,20 +82,23 @@ function _parseProductToView(product: any) {
 export const getProducts = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const limit = getIntegerParam(req.query.limit as string, 10)
   const page = getIntegerParam(req.query.page as string, 0)
   const search = req.query.search as string
-  const categoryId = req.query.categoryId as string
+  const category = req.query.category as string
 
   const whereCriteria: any = {}
   if (isValidString(search)) {
     whereCriteria.name = { contains: search }
   }
-  if (isValidString(categoryId)) {
-    whereCriteria.categoryId = parseInt(categoryId)
+  if (isValidString(category)) {
+    whereCriteria.ProductCategories = {
+      some: {
+        categoryId: parseInt(category)
+      }
+    }
   }
 
   const include = {
@@ -118,8 +117,8 @@ export const getProducts = async (
   const products = await ctx.prisma.product.findMany({
     take: limit + 1,
     skip: (page - 1) * limit,
-    where: whereCriteria,
-    include
+    include,
+    where: whereCriteria
   })
 
   if (products.length === 0) {
@@ -143,7 +142,6 @@ export const getProducts = async (
 export const getProduct = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
@@ -173,7 +171,6 @@ export const getProduct = async (
 export const createProduct = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { name, description, price, reference, categories, components } =
@@ -235,7 +232,6 @@ export const createProduct = async (
 export const updateProduct = async (
   req: Request,
   res: Response,
-  next: NextFunction,
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
@@ -253,7 +249,7 @@ export const updateProduct = async (
 
   if (categories !== undefined) {
     await ctx.prisma.productCategory.deleteMany({
-      where: { product: productId }
+      where: { productId }
     })
 
     if (categories !== null) {
@@ -269,7 +265,7 @@ export const updateProduct = async (
     }
 
     await ctx.prisma.productComponent.deleteMany({
-      where: { parentProduct: productId }
+      where: { parentId: productId }
     })
 
     if (components !== null) {
