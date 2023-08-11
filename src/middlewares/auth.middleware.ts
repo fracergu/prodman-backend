@@ -1,3 +1,4 @@
+import { RequestError } from '@exceptions/RequestError'
 import { type Context } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
 
@@ -10,9 +11,7 @@ export const requireAdminRole = async (
   const userId = req.session?.user
 
   if (userId == null) {
-    return res
-      .status(401)
-      .json({ status: 'error', message: 'Not authenticated' })
+    throw new RequestError(440, 'Login timeout')
   }
 
   const user = await ctx.prisma.user.findUnique({ where: { id: userId } })

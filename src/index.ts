@@ -30,7 +30,7 @@ app.use(
     secret: process.env.SESSION_SECRET ?? 'secret',
     resave: false,
     saveUninitialized: true,
-    cookie: { httpOnly: true },
+    cookie: { httpOnly: true, sameSite: 'strict' },
     store: sessionStore
   })
 )
