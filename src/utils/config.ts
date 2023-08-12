@@ -1,3 +1,4 @@
+import { generateMockUsers } from '@mocks/usernames.mock'
 import {
   ConfigurationKeys,
   ConfigurationValueTypes
@@ -53,11 +54,14 @@ export async function mockDevelopmentData() {
       }
     })
 
-    Array.from({ length: 40 }).forEach(async (_, i) => {
+    const mockUsers = generateMockUsers(50)
+
+    mockUsers.forEach(async user => {
       await prisma.user.create({
         data: {
-          name: `Worker ${i}`,
-          username: `worker${i}`,
+          name: user.name,
+          lastName: user.lastName,
+          username: user.username,
           password: await bcrypt.hash('1234', 8),
           role: 'user'
         }

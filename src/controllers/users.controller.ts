@@ -30,13 +30,22 @@ export const getUsers = async (
   const page = getIntegerParam(req.query.page as string, 1)
   const search = req.query.search as string
   const role = req.query.role as string
+  const inactive = req.query.inactive as string
 
   const whereCriteria: any = {}
+
   if (isValidString(search)) {
-    whereCriteria.name = { contains: search }
+    whereCriteria.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { lastName: { contains: search, mode: 'insensitive' } }
+    ]
   }
   if (isValidString(role)) {
     whereCriteria.role = role
+  }
+
+  if (isValidString(inactive)) {
+    whereCriteria.active = !(inactive === 'true')
   }
 
   const [count, users] = await ctx.prisma.$transaction([
@@ -48,10 +57,6 @@ export const getUsers = async (
       select: userSelector
     })
   ])
-
-  if (users.length === 0) {
-    throw new RequestError(404, 'Not found')
-  }
 
   const hasNextPage = users.length > limit
   if (hasNextPage) {

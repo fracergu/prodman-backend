@@ -554,6 +554,11 @@ paths:
           schema:
             type: string
           description: Role term to filter users by role
+        - in: query
+          name: inactive
+          schema:
+            type: string
+          description: Inactive term to filter users by active/inactive
       responses:
         200:
           description: Successful operation

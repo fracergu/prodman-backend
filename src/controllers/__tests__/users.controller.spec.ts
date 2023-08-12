@@ -14,7 +14,7 @@ import {
 } from '@models/users.model'
 import { type User } from '@prisma/client'
 import { createMockContext, type MockContext } from '@utils/context'
-import { type NextFunction, type Request, type Response } from 'express'
+import { type Request, type Response } from 'express'
 import bcrypt from 'bcrypt'
 
 describe('UsersController', () => {
@@ -112,7 +112,12 @@ describe('UsersController', () => {
       expect(context.prisma.user.findMany).toHaveBeenCalledWith({
         take: 11,
         skip: 0,
-        where: { name: { contains: 'Jane' } },
+        where: {
+          OR: [
+            { name: { contains: 'Jane', mode: 'insensitive' } },
+            { lastName: { contains: 'Jane', mode: 'insensitive' } }
+          ]
+        },
         select: userSelector
       })
       expect(res.status).toHaveBeenCalledWith(200)
@@ -152,14 +157,6 @@ describe('UsersController', () => {
         nextPage: null,
         prevPage: null,
         total: 3
-      })
-    })
-
-    it('should throw a 404 if no users are found', async () => {
-      context.prisma.$transaction.mockResolvedValue([0, []])
-      await getUsers(req, res, context).catch(err => {
-        expect(err).toBeInstanceOf(RequestError)
-        expect(err.message).toBe('Not found')
       })
     })
 
