@@ -53,7 +53,7 @@ export async function mockDevelopmentData() {
       }
     })
 
-    Array.from({ length: 10 }).forEach(async (_, i) => {
+    Array.from({ length: 40 }).forEach(async (_, i) => {
       await prisma.user.create({
         data: {
           name: `Worker ${i}`,

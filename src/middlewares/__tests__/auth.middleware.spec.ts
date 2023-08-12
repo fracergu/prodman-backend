@@ -3,6 +3,7 @@ import { createMockContext, type MockContext } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
 
 import { requireAdminRole } from '../auth.middleware'
+import { RequestError } from '@exceptions/RequestError'
 
 describe('requireAdminRole Middleware', () => {
   let context: MockContext
@@ -44,12 +45,11 @@ describe('requireAdminRole Middleware', () => {
     expect(next).toHaveBeenCalled()
   })
 
-  it('should return 401 if user is not authenticated', async () => {
-    await requireAdminRole(req, res, context, next)
-    expect(res.status).toHaveBeenCalledWith(401)
-    expect(res.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Not authenticated'
+  it('should return 440 if user is not authenticated', async () => {
+    await requireAdminRole(req, res, context, next).catch(err => {
+      expect(err).toBeInstanceOf(RequestError)
+      expect(err.statusCode).toEqual(440)
+      expect(err.message).toEqual('Login timeout')
     })
   })
 

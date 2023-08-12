@@ -74,7 +74,10 @@ describe('UsersController', () => {
       )
 
       req = mockRequest({ limit: '1', page: '2' })
-      context.prisma.user.findMany.mockResolvedValue(mockUsersArray as User[])
+      context.prisma.$transaction.mockResolvedValue([
+        3,
+        mockUsersArray as User[]
+      ])
       await getUsers(req, res, context)
       expect(context.prisma.user.findMany).toHaveBeenCalledWith({
         take: 2,
@@ -86,7 +89,8 @@ describe('UsersController', () => {
       expect(res.json).toHaveBeenCalledWith({
         data: mockUsersArray,
         nextPage: 3,
-        prevPage: 1
+        prevPage: 1,
+        total: 3
       })
     })
     it('should return users by name search', async () => {
@@ -103,7 +107,7 @@ describe('UsersController', () => {
         }
       ]
       req = mockRequest({ search: 'Jane' })
-      context.prisma.user.findMany.mockResolvedValue(mockUsers as User[])
+      context.prisma.$transaction.mockResolvedValue([1, mockUsers])
       await getUsers(req, res, context)
       expect(context.prisma.user.findMany).toHaveBeenCalledWith({
         take: 11,
@@ -115,7 +119,8 @@ describe('UsersController', () => {
       expect(res.json).toHaveBeenCalledWith({
         data: mockUsers,
         nextPage: null,
-        prevPage: null
+        prevPage: null,
+        total: 1
       })
     })
 
@@ -133,7 +138,7 @@ describe('UsersController', () => {
         }
       ]
       req = mockRequest({ role: 'admin' })
-      context.prisma.user.findMany.mockResolvedValue(mockUsers as User[])
+      context.prisma.$transaction.mockResolvedValue([3, mockUsers as User[]])
       await getUsers(req, res, context)
       expect(context.prisma.user.findMany).toHaveBeenCalledWith({
         take: 11,
@@ -145,12 +150,13 @@ describe('UsersController', () => {
       expect(res.json).toHaveBeenCalledWith({
         data: mockUsers,
         nextPage: null,
-        prevPage: null
+        prevPage: null,
+        total: 3
       })
     })
 
     it('should throw a 404 if no users are found', async () => {
-      context.prisma.user.findMany.mockResolvedValue([])
+      context.prisma.$transaction.mockResolvedValue([0, []])
       await getUsers(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(RequestError)
         expect(err.message).toBe('Not found')
@@ -158,7 +164,7 @@ describe('UsersController', () => {
     })
 
     it('should pass any other error to the error handler', async () => {
-      context.prisma.user.findMany.mockRejectedValueOnce(new Error('error'))
+      context.prisma.$transaction.mockRejectedValueOnce(new Error('error'))
       await getUsers(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(Error)
         expect(err.message).toBe('error')

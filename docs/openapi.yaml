@@ -574,6 +574,9 @@ paths:
                     type: integer
                     nullable: true
                     example: null
+                  total:
+                    type: integer
+                    example: 1
         400:
           description: Invalid input
         500:

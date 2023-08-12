@@ -2,7 +2,6 @@ import { RequestError } from '@exceptions/RequestError'
 import {
   type UserCreationRequest,
   type UserCredentialsRequest,
-  type UserResponse,
   type UserUpdateRequest
 } from '@models/users.model'
 import { type Context } from '@utils/context'
@@ -40,12 +39,15 @@ export const getUsers = async (
     whereCriteria.role = role
   }
 
-  const users: UserResponse[] = await ctx.prisma.user.findMany({
-    take: limit + 1,
-    skip: (page - 1) * limit,
-    where: whereCriteria,
-    select: userSelector
-  })
+  const [count, users] = await ctx.prisma.$transaction([
+    ctx.prisma.user.count({ where: whereCriteria }),
+    ctx.prisma.user.findMany({
+      take: limit + 1,
+      skip: (page - 1) * limit,
+      where: whereCriteria,
+      select: userSelector
+    })
+  ])
 
   if (users.length === 0) {
     throw new RequestError(404, 'Not found')
@@ -58,6 +60,7 @@ export const getUsers = async (
 
   res.status(200).json({
     data: users,
+    total: count,
     nextPage: hasNextPage ? page + 1 : null,
     prevPage: page > 1 ? page - 1 : null
   })
