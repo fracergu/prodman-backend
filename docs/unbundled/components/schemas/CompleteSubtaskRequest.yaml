@@ -1,0 +1,6 @@
+type: object
+properties:
+  quantityCompleted:
+    type: integer
+    description: The quantity of the subtask completed
+    example: 3

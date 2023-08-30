@@ -1,0 +1,36 @@
+type: object
+properties:
+  id:
+    type: integer
+    description: The user's id
+    example: 1
+  username:
+    type: string
+    description: The user's username
+    example: johndo3
+  name:
+    type: string
+    description: The user's name
+    example: John
+  lastName:
+    type: string
+    description: The user's last name
+    example: Doe
+  role:
+    type: string
+    description: The user's role
+    example: admin
+  active:
+    type: boolean
+    description: Whether the user is active or not
+    example: true
+  createdAt:
+    type: string
+    format: date-time
+    description: The user's creation date
+    example: '2021-01-01T00:00:00.000Z'
+  updatedAt:
+    type: string
+    format: date-time
+    description: The user's update date
+    example: '2021-01-01T00:00:00.000Z'

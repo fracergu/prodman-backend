@@ -1,454 +1,645 @@
-import { type SubTask, type SubTaskEvent, type Task } from '@prisma/client'
+import { type Subtask, type SubtaskEvent, type Task } from '@prisma/client'
 
 type JoinedTask = Omit<Task, 'userId'> & {
-  User: { id: number; name: string; lastName: string | null }
-  SubTasks: Array<SubTask & { SubTaskEvents: SubTaskEvent[] }>
+  user: { id: number; name: string; lastName: string | null }
+  subtasks: Array<Omit<Subtask, 'taskId'> & { subtaskEvents: SubtaskEvent[] }>
 }
 
 export const mockTaskArray: JoinedTask[] = [
   {
     id: 1,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 2 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 4,
       name: 'Worker 8',
       lastName: null
     },
-    SubTasks: [
+    subtasks: [
       {
         id: 2,
+        order: 0,
         quantity: 8,
         status: 'pending',
-        notes: 'Subtask 2-4 notes',
-        taskId: 1,
         productId: 16,
-        SubTaskEvents: [
+        subtaskEvents: [
           {
             id: 1,
             subtaskId: 2,
-            date: new Date('2023-08-10T12:55:59.310Z'),
+            timestamp: new Date('2023-08-10T12:55:59.310Z'),
             quantityCompleted: 4
           }
         ]
       },
       {
         id: 10,
+        order: 1,
         quantity: 3,
         status: 'pending',
-        notes: 'Subtask 2-3 notes',
-        taskId: 1,
         productId: 7,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 15,
+        order: 2,
         quantity: 3,
         status: 'pending',
-        notes: 'Subtask 2-2 notes',
-        taskId: 1,
         productId: 35,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 21,
+        order: 3,
         quantity: 10,
         status: 'pending',
-        notes: 'Subtask 2-1 notes',
-        taskId: 1,
         productId: 29,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 25,
+        order: 4,
         quantity: 3,
         status: 'pending',
-        notes: 'Subtask 2-0 notes',
-        taskId: 1,
         productId: 46,
-        SubTaskEvents: []
+        subtaskEvents: []
       }
     ]
   },
   {
     id: 2,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 0 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 4,
       name: 'Worker 8',
       lastName: null
     },
-    SubTasks: [
+    subtasks: [
       {
         id: 3,
+        order: 0,
         quantity: 10,
         status: 'pending',
-        notes: 'Subtask 0-4 notes',
-        taskId: 2,
         productId: 21,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 6,
+        order: 1,
         quantity: 7,
         status: 'pending',
-        notes: 'Subtask 0-3 notes',
-        taskId: 2,
         productId: 43,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 11,
+        order: 2,
         quantity: 9,
         status: 'pending',
-        notes: 'Subtask 0-2 notes',
-        taskId: 2,
         productId: 10,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 16,
+        order: 3,
         quantity: 3,
         status: 'pending',
-        notes: 'Subtask 0-1 notes',
-        taskId: 2,
         productId: 10,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 20,
+        order: 4,
         quantity: 7,
         status: 'pending',
-        notes: 'Subtask 0-0 notes',
-        taskId: 2,
         productId: 49,
-        SubTaskEvents: []
+        subtaskEvents: []
       }
     ]
   },
   {
     id: 3,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 3 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 6,
       name: 'Worker 3',
       lastName: null
     },
-    SubTasks: [
+    subtasks: [
       {
         id: 4,
+        order: 0,
         quantity: 5,
         status: 'pending',
-        notes: 'Subtask 3-4 notes',
-        taskId: 3,
         productId: 10,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 8,
+        order: 1,
         quantity: 1,
         status: 'pending',
-        notes: 'Subtask 3-3 notes',
-        taskId: 3,
         productId: 50,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 12,
+        order: 2,
         quantity: 6,
         status: 'pending',
-        notes: 'Subtask 3-2 notes',
-        taskId: 3,
         productId: 23,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 18,
+        order: 3,
         quantity: 10,
         status: 'pending',
-        notes: 'Subtask 3-1 notes',
-        taskId: 3,
         productId: 15,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 24,
+        order: 4,
         quantity: 1,
         status: 'pending',
-        notes: 'Subtask 3-0 notes',
-        taskId: 3,
         productId: 50,
-        SubTaskEvents: []
+        subtaskEvents: []
       }
     ]
   },
   {
     id: 4,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 4 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 6,
       name: 'Worker 3',
       lastName: null
     },
-    SubTasks: [
+    subtasks: [
       {
         id: 1,
+        order: 0,
         quantity: 10,
         status: 'pending',
-        notes: 'Subtask 4-4 notes',
-        taskId: 4,
         productId: 5,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 7,
+        order: 1,
         quantity: 1,
         status: 'pending',
-        notes: 'Subtask 4-3 notes',
-        taskId: 4,
         productId: 35,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 13,
+        order: 2,
         quantity: 1,
         status: 'pending',
-        notes: 'Subtask 4-2 notes',
-        taskId: 4,
         productId: 50,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 17,
+        order: 3,
         quantity: 5,
         status: 'pending',
-        notes: 'Subtask 4-1 notes',
-        taskId: 4,
         productId: 23,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 22,
+        order: 4,
         quantity: 6,
         status: 'pending',
-        notes: 'Subtask 4-0 notes',
-        taskId: 4,
         productId: 16,
-        SubTaskEvents: []
+        subtaskEvents: []
       }
     ]
   },
   {
     id: 5,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 1 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 1,
       name: 'root',
       lastName: null
     },
-    SubTasks: [
+    subtasks: [
       {
         id: 5,
+        order: 0,
         quantity: 5,
         status: 'pending',
-        notes: 'Subtask 1-4 notes',
-        taskId: 5,
         productId: 38,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 9,
+        order: 1,
         quantity: 4,
         status: 'pending',
-        notes: 'Subtask 1-3 notes',
-        taskId: 5,
         productId: 42,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 14,
+        order: 2,
         quantity: 5,
         status: 'pending',
-        notes: 'Subtask 1-2 notes',
-        taskId: 5,
         productId: 28,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 19,
+        order: 3,
         quantity: 2,
         status: 'pending',
-        notes: 'Subtask 1-1 notes',
-        taskId: 5,
         productId: 36,
-        SubTaskEvents: []
+        subtaskEvents: []
       },
       {
         id: 23,
+        order: 4,
         quantity: 1,
         status: 'pending',
-        notes: 'Subtask 1-0 notes',
-        taskId: 5,
         productId: 32,
-        SubTaskEvents: []
+        subtaskEvents: []
       }
     ]
   }
 ]
 
+type SubtaskParsed = Omit<Subtask, 'taskId'> & {
+  subtaskEvents: SubtaskEvent[]
+}
+
 type TaskParsed = Omit<Task, 'userId'> & {
-  User: { id: number; name: string; lastName: string | null }
+  user: { id: number; name: string; lastName: string | null }
   percentageCompleted: number
-  subtasks: number
-  SubTasks: undefined
+  subtasks: SubtaskParsed[]
 }
 
 export const mockTaskParsedArray: TaskParsed[] = [
   {
     id: 1,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 2 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 4,
       name: 'Worker 8',
       lastName: null
     },
     percentageCompleted: 14.81,
-    subtasks: 5,
-    SubTasks: undefined
+    subtasks: [
+      {
+        id: 2,
+        order: 0,
+        quantity: 8,
+        status: 'pending',
+        productId: 16,
+        subtaskEvents: [
+          {
+            id: 1,
+            subtaskId: 2,
+            timestamp: new Date('2023-08-10T12:55:59.310Z'),
+            quantityCompleted: 4
+          }
+        ]
+      },
+      {
+        id: 10,
+        order: 1,
+        quantity: 3,
+        status: 'pending',
+        productId: 7,
+        subtaskEvents: []
+      },
+      {
+        id: 15,
+        order: 2,
+        quantity: 3,
+        status: 'pending',
+        productId: 35,
+        subtaskEvents: []
+      },
+      {
+        id: 21,
+        order: 3,
+        quantity: 10,
+        status: 'pending',
+        productId: 29,
+        subtaskEvents: []
+      },
+      {
+        id: 25,
+        order: 4,
+        quantity: 3,
+        status: 'pending',
+        productId: 46,
+        subtaskEvents: []
+      }
+    ]
   },
   {
     id: 2,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 0 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 4,
       name: 'Worker 8',
       lastName: null
     },
     percentageCompleted: 0,
-    subtasks: 5,
-    SubTasks: undefined
+    subtasks: [
+      {
+        id: 3,
+        order: 0,
+        quantity: 10,
+        status: 'pending',
+        productId: 21,
+        subtaskEvents: []
+      },
+      {
+        id: 6,
+        order: 1,
+        quantity: 7,
+        status: 'pending',
+        productId: 43,
+        subtaskEvents: []
+      },
+      {
+        id: 11,
+        order: 2,
+        quantity: 9,
+        status: 'pending',
+        productId: 10,
+        subtaskEvents: []
+      },
+      {
+        id: 16,
+        order: 3,
+        quantity: 3,
+        status: 'pending',
+        productId: 10,
+        subtaskEvents: []
+      },
+      {
+        id: 20,
+        order: 4,
+        quantity: 7,
+        status: 'pending',
+        productId: 49,
+        subtaskEvents: []
+      }
+    ]
   },
   {
     id: 3,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 3 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 6,
       name: 'Worker 3',
       lastName: null
     },
     percentageCompleted: 0,
-    subtasks: 5,
-    SubTasks: undefined
+    subtasks: [
+      {
+        id: 4,
+        order: 0,
+        quantity: 5,
+        status: 'pending',
+        productId: 10,
+        subtaskEvents: []
+      },
+      {
+        id: 8,
+        order: 1,
+        quantity: 1,
+        status: 'pending',
+        productId: 50,
+        subtaskEvents: []
+      },
+      {
+        id: 12,
+        order: 2,
+        quantity: 6,
+        status: 'pending',
+        productId: 23,
+        subtaskEvents: []
+      },
+      {
+        id: 18,
+        order: 3,
+        quantity: 10,
+        status: 'pending',
+        productId: 15,
+        subtaskEvents: []
+      },
+      {
+        id: 24,
+        order: 4,
+        quantity: 1,
+        status: 'pending',
+        productId: 50,
+        subtaskEvents: []
+      }
+    ]
   },
   {
     id: 4,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 4 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 6,
       name: 'Worker 3',
       lastName: null
     },
     percentageCompleted: 0,
-    subtasks: 5,
-    SubTasks: undefined
+    subtasks: [
+      {
+        id: 1,
+        order: 0,
+        quantity: 10,
+        status: 'pending',
+        productId: 5,
+        subtaskEvents: []
+      },
+      {
+        id: 7,
+        order: 1,
+        quantity: 1,
+        status: 'pending',
+        productId: 35,
+        subtaskEvents: []
+      },
+      {
+        id: 13,
+        order: 2,
+        quantity: 1,
+        status: 'pending',
+        productId: 50,
+        subtaskEvents: []
+      },
+      {
+        id: 17,
+        order: 3,
+        quantity: 5,
+        status: 'pending',
+        productId: 23,
+        subtaskEvents: []
+      },
+      {
+        id: 22,
+        order: 4,
+        quantity: 6,
+        status: 'pending',
+        productId: 16,
+        subtaskEvents: []
+      }
+    ]
   },
   {
     id: 5,
     createdAt: new Date('2023-08-10T12:55:59.310Z'),
+    updatedAt: new Date('2023-08-10T12:55:59.310Z'),
     notes: 'Task 1 notes',
     status: 'pending',
-    User: {
+    user: {
       id: 1,
       name: 'root',
       lastName: null
     },
     percentageCompleted: 0,
-    subtasks: 5,
-    SubTasks: undefined
+    subtasks: [
+      {
+        id: 5,
+        order: 0,
+        quantity: 5,
+        status: 'pending',
+        productId: 38,
+        subtaskEvents: []
+      },
+      {
+        id: 9,
+        order: 1,
+        quantity: 4,
+        status: 'pending',
+        productId: 42,
+        subtaskEvents: []
+      },
+      {
+        id: 14,
+        order: 2,
+        quantity: 5,
+        status: 'pending',
+        productId: 28,
+        subtaskEvents: []
+      },
+      {
+        id: 19,
+        order: 3,
+        quantity: 2,
+        status: 'pending',
+        productId: 36,
+        subtaskEvents: []
+      },
+      {
+        id: 23,
+        order: 4,
+        quantity: 1,
+        status: 'pending',
+        productId: 32,
+        subtaskEvents: []
+      }
+    ]
   }
 ]
 
 export const mockTaskIdividual = mockTaskArray[0]
-export const mockTaskParsedIdividual = {
+export const mockTaskParsedIdividual: TaskParsed = {
   id: 1,
   createdAt: new Date('2023-08-10T12:55:59.310Z'),
+  updatedAt: new Date('2023-08-10T12:55:59.310Z'),
   notes: 'Task 2 notes',
   status: 'pending',
-  User: {
+  user: {
     id: 4,
     name: 'Worker 8',
     lastName: null
   },
   percentageCompleted: 14.81,
-  SubTasks: [
+  subtasks: [
     {
       id: 2,
+      order: 0,
       quantity: 8,
       status: 'pending',
-      notes: 'Subtask 2-4 notes',
-      taskId: 1,
       productId: 16,
-      SubTaskEvents: [
+      subtaskEvents: [
         {
           id: 1,
           subtaskId: 2,
-          date: new Date('2023-08-10T12:55:59.310Z'),
+          timestamp: new Date('2023-08-10T12:55:59.310Z'),
           quantityCompleted: 4
         }
       ]
     },
     {
       id: 10,
+      order: 1,
       quantity: 3,
       status: 'pending',
-      notes: 'Subtask 2-3 notes',
-      taskId: 1,
       productId: 7,
-      SubTaskEvents: []
+      subtaskEvents: []
     },
     {
       id: 15,
+      order: 2,
       quantity: 3,
       status: 'pending',
-      notes: 'Subtask 2-2 notes',
-      taskId: 1,
       productId: 35,
-      SubTaskEvents: []
+      subtaskEvents: []
     },
     {
       id: 21,
+      order: 3,
       quantity: 10,
       status: 'pending',
-      notes: 'Subtask 2-1 notes',
-      taskId: 1,
       productId: 29,
-      SubTaskEvents: []
+      subtaskEvents: []
     },
     {
       id: 25,
+      order: 4,
       quantity: 3,
       status: 'pending',
-      notes: 'Subtask 2-0 notes',
-      taskId: 1,
       productId: 46,
-      SubTaskEvents: []
+      subtaskEvents: []
     }
   ]
 }

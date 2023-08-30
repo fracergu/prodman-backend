@@ -1,7 +1,6 @@
 import {
   createTask,
   deleteTask,
-  getTask,
   getTasks,
   updateTask
 } from '@controllers/tasks.controller'
@@ -13,24 +12,37 @@ import {
   mockTaskParsedIdividual
 } from '@mocks/tasks.mock'
 import { createMockContext, type MockContext } from '@utils/context'
-import { type NextFunction, type Request, type Response } from 'express'
+import { type Request, type Response } from 'express'
 describe('TaskContoller', () => {
   let context: MockContext
   let req: Request
   let res: Response
 
-  const select = {
+  const querySelect = {
     id: true,
     createdAt: true,
+    updatedAt: true,
     notes: true,
     status: true,
     userId: false,
-    User: {
+    user: {
       select: { id: true, name: true, lastName: true }
     },
-    SubTasks: {
-      include: {
-        SubTaskEvents: true
+    subtasks: {
+      select: {
+        id: true,
+        order: true,
+        quantity: true,
+        status: true,
+        productId: false,
+        taskId: false,
+        product: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
+        subtaskEvents: true
       }
     }
   }
@@ -61,20 +73,21 @@ describe('TaskContoller', () => {
   describe('getTasks', () => {
     it('should return tasks with default pagination', async () => {
       req = mockRequest({ limit: '1', page: '2' })
-      context.prisma.task.findMany.mockResolvedValue([
-        mockTaskArray[1] as any,
-        mockTaskArray[2] as any
+      context.prisma.$transaction.mockResolvedValue([
+        2,
+        [mockTaskArray[1] as any, mockTaskArray[2] as any]
       ])
       await getTasks(req, res, context)
       expect(context.prisma.task.findMany).toHaveBeenCalledWith({
         take: 2,
         skip: 1,
         where: {},
-        select
+        select: querySelect
       })
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith({
         data: [mockTaskParsedArray[1]],
+        total: 2,
         nextPage: 3,
         prevPage: 1
       })
@@ -82,67 +95,52 @@ describe('TaskContoller', () => {
 
     it('should return tasks with user filter', async () => {
       req = mockRequest({ userId: '1' })
-      context.prisma.task.findMany.mockResolvedValue(mockTaskArray as any)
+
+      context.prisma.$transaction.mockResolvedValue([
+        mockTaskArray.length,
+        mockTaskArray as any
+      ])
+
       await getTasks(req, res, context)
       expect(context.prisma.task.findMany).toHaveBeenCalledWith({
         take: 11,
         skip: 0,
         where: { userId: 1 },
-        select
+        select: querySelect
       })
       expect(res.status).toHaveBeenCalledWith(200)
     })
 
     it('should return tasks with status filter', async () => {
       req = mockRequest({ status: 'completed' })
-      context.prisma.task.findMany.mockResolvedValue(mockTaskArray as any)
+      context.prisma.$transaction.mockResolvedValue([
+        mockTaskArray.length,
+        mockTaskArray as any
+      ])
       await getTasks(req, res, context)
       expect(context.prisma.task.findMany).toHaveBeenCalledWith({
         take: 11,
         skip: 0,
         where: { status: 'completed' },
-        select
+        select: querySelect
       })
       expect(res.status).toHaveBeenCalledWith(200)
     })
 
     it('should return tasks with date filter', async () => {
       req = mockRequest({ startDate: '2023-01-01' })
-      context.prisma.task.findMany.mockResolvedValue(mockTaskArray as any)
+      context.prisma.$transaction.mockResolvedValue([
+        mockTaskArray.length,
+        mockTaskArray as any
+      ])
       await getTasks(req, res, context)
       expect(context.prisma.task.findMany).toHaveBeenCalledWith({
         take: 11,
         skip: 0,
         where: { createdAt: { gte: new Date('2023-01-01') } },
-        select
+        select: querySelect
       })
       expect(res.status).toHaveBeenCalledWith(200)
-    })
-
-    it('should throw a 404 if no tasks are found', async () => {
-      req = mockRequest()
-      context.prisma.task.findMany.mockResolvedValue([])
-      await getTasks(req, res, context).catch(err => {
-        expect(err).toEqual(new RequestError(404, 'Not found'))
-      })
-    })
-  })
-
-  describe('getTask', () => {
-    it('should return a task by ID', async () => {
-      req.params = { id: '1' }
-      context.prisma.task.findUnique.mockResolvedValue(mockTaskIdividual as any)
-      await getTask(req, res, context)
-      expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith(mockTaskParsedIdividual)
-    })
-
-    it('should throw a 404 if the task is not found', async () => {
-      req.params = { id: '1' }
-      context.prisma.task.findUnique.mockResolvedValue(null)
-      await getTask(req, res, context).catch(err => {
-        expect(err).toEqual(new RequestError(404, 'Not found'))
-      })
     })
   })
 
@@ -151,7 +149,7 @@ describe('TaskContoller', () => {
       req.body = {
         notes: 'test',
         userId: 1,
-        subTasks: [
+        subtasks: [
           {
             notes: 'test',
             userId: 1
@@ -159,10 +157,9 @@ describe('TaskContoller', () => {
         ]
       }
 
-      const mockRequest = { ...mockTaskIdividual, subTasks: req.body.subTasks }
+      const mockRequest = { ...mockTaskIdividual }
       const mockResponse = {
-        ...mockTaskParsedIdividual,
-        subTasks: req.body.subTasks
+        ...mockTaskParsedIdividual
       }
 
       context.prisma.task.create.mockResolvedValue(mockRequest as any)
@@ -173,8 +170,7 @@ describe('TaskContoller', () => {
 
     it('should throw a 400 if required fields are missing', async () => {
       req.body = {
-        notes: 'test',
-        userId: 1
+        notes: 'test'
       }
       await createTask(req, res, context).catch(err => {
         expect(err).toEqual(new RequestError(400, 'Missing required fields'))
@@ -188,14 +184,14 @@ describe('TaskContoller', () => {
       req.body = {
         status: 'completed'
       }
-      context.prisma.subTask.updateMany.mockResolvedValue(
+      context.prisma.subtask.updateMany.mockResolvedValue(
         mockTaskIdividual as any
       )
       context.prisma.task.update.mockResolvedValue(mockTaskIdividual as any)
 
       await updateTask(req, res, context)
 
-      expect(context.prisma.subTask.updateMany).toHaveBeenCalledWith({
+      expect(context.prisma.subtask.updateMany).toHaveBeenCalledWith({
         where: { taskId: 1 },
         data: { status: 'completed' }
       })
@@ -208,20 +204,19 @@ describe('TaskContoller', () => {
     it('should update subTasks array and delete previous ones if needed', async () => {
       req.params = { id: '1' }
       req.body = {
-        subTasks: [
+        subtasks: [
           {
             quantity: 5,
-            notes: 'test',
             productId: 1
           }
         ]
       }
-      context.prisma.subTask.deleteMany.mockResolvedValue({} as any)
+      context.prisma.subtask.deleteMany.mockResolvedValue({} as any)
       context.prisma.task.update.mockResolvedValue(mockTaskIdividual as any)
 
       await updateTask(req, res, context)
 
-      expect(context.prisma.subTask.deleteMany).toHaveBeenCalledWith({
+      expect(context.prisma.subtask.deleteMany).toHaveBeenCalledWith({
         where: { taskId: 1 }
       })
       expect(res.status).toHaveBeenCalledWith(200)
@@ -230,7 +225,6 @@ describe('TaskContoller', () => {
     it('should update task notes and user connection', async () => {
       req.params = { id: '1' }
       req.body = {
-        notes: 'new notes',
         userId: 2
       }
       context.prisma.task.update.mockResolvedValue(mockTaskIdividual as any)
@@ -240,10 +234,9 @@ describe('TaskContoller', () => {
       expect(context.prisma.task.update).toHaveBeenCalledWith({
         where: { id: 1 },
         data: {
-          notes: 'new notes',
-          User: { connect: { id: 2 } }
+          user: { connect: { id: 2 } }
         },
-        select
+        select: querySelect
       })
       expect(res.status).toHaveBeenCalledWith(200)
     })
@@ -251,7 +244,7 @@ describe('TaskContoller', () => {
     it('should throw a 400 if no task ID is provided', async () => {
       req.params = {}
       await updateTask(req, res, context).catch(err => {
-        expect(err).toEqual(new RequestError(400, 'Task ID is required'))
+        expect(err).toEqual(new RequestError(400, 'Invalid task ID'))
       })
     })
   })
@@ -260,12 +253,12 @@ describe('TaskContoller', () => {
     it('should delete a task by ID', async () => {
       req.params = { id: '1' }
       context.prisma.task.findUnique.mockResolvedValue(mockTaskIdividual as any)
-      context.prisma.subTask.deleteMany.mockResolvedValue({} as any)
+      context.prisma.subtask.deleteMany.mockResolvedValue({} as any)
       context.prisma.task.delete.mockResolvedValue({} as any)
 
       await deleteTask(req, res, context)
 
-      expect(context.prisma.subTask.deleteMany).toHaveBeenCalledWith({
+      expect(context.prisma.subtask.deleteMany).toHaveBeenCalledWith({
         where: { taskId: 1 }
       })
       expect(context.prisma.task.delete).toHaveBeenCalledWith({
@@ -278,7 +271,7 @@ describe('TaskContoller', () => {
     it('should throw a 400 if no task ID is provided', async () => {
       req.params = {}
       await deleteTask(req, res, context).catch(err => {
-        expect(err).toEqual(new RequestError(400, 'Task ID is required'))
+        expect(err).toEqual(new RequestError(400, 'Invalid task ID'))
       })
     })
 

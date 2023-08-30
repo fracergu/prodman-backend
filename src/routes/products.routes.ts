@@ -3,7 +3,6 @@ import {
   createProduct,
   deleteCategory,
   getCategories,
-  getProduct,
   getProducts,
   updateCategory,
   updateProduct
@@ -23,7 +22,6 @@ router.delete('/categories/:id', withContext(deleteCategory))
 
 router.get('/', withContext(getProducts))
 router.post('/', withContext(createProduct))
-router.get('/:id', withContext(getProduct))
 router.put('/:id', withContext(updateProduct))
 
 export default router

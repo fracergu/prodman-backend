@@ -1,7 +1,7 @@
 import { RequestError } from '@exceptions/RequestError'
 import {
-  type ConfigRequest,
-  type ConfigurationKeys,
+  type AppConfig,
+  type ConfigurationKey,
   type DatabaseConfig
 } from '@models/config.model'
 import {
@@ -17,7 +17,7 @@ export const getConfigurations = async (
   res: Response,
   ctx: Context
 ): Promise<void> => {
-  const config = (await ctx.prisma.config.findMany()) as DatabaseConfig[]
+  const config = (await ctx.prisma.appConfig.findMany()) as DatabaseConfig[]
   res.status(200).json(parseConfigurationArray(config))
 }
 
@@ -26,19 +26,44 @@ export const updateConfigurations = async (
   res: Response,
   ctx: Context
 ): Promise<void> => {
-  const { key, value } = req.body as ConfigRequest
-  const expectedType = ConfigurationTypeMapping[key as ConfigurationKeys]
+  const config = req.body as AppConfig
 
-  if (expectedType === undefined) {
-    throw new RequestError(400, 'Invalid configuration key')
+  const parsedConfigurations: DatabaseConfig[] = []
+
+  for (const key in config) {
+    const value = config[key as ConfigurationKey]
+
+    const expectedType = ConfigurationTypeMapping[key as ConfigurationKey]
+
+    if (expectedType === undefined) {
+      throw new RequestError(400, 'Invalid configuration key')
+    }
+
+    const parsedValue = parseConfigurationValue(expectedType, value.toString())
+
+    parsedConfigurations.push({
+      key: key as ConfigurationKey,
+      type: expectedType,
+      value: parsedValue.toString()
+    })
   }
 
-  const parsedValue = parseConfigurationValue(expectedType, value.toString())
+  await Promise.all(
+    parsedConfigurations.map(
+      async config =>
+        await ctx.prisma.appConfig.update({
+          where: {
+            key: config.key
+          },
+          data: {
+            value: config.value
+          }
+        })
+    )
+  )
 
-  const config = (await ctx.prisma.config.update({
-    where: { key },
-    data: { value: parsedValue.toString() }
-  })) as DatabaseConfig
+  const updatedConfig =
+    (await ctx.prisma.appConfig.findMany()) as DatabaseConfig[]
 
-  res.status(200).json(parseConfigurationArray([config]))
+  res.status(200).json(parseConfigurationArray(updatedConfig))
 }

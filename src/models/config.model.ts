@@ -1,10 +1,13 @@
-export interface ConfigRequest {
-  key: string
-  value: string
+export interface AppConfig {
+  registerEnabled: boolean
+  workerAutoTimeout: number
+  workerGetNextSubtask: boolean
 }
 
-export enum ConfigurationKeys {
-  REGISTER_ENABLED = 'registerEnabled'
+export enum ConfigurationKey {
+  REGISTER_ENABLED = 'registerEnabled',
+  WORKER_AUTO_TIMEOUT = 'workerAutoTimeout',
+  WORKER_GET_NEXT_SUBTASK = 'workerGetNextSubtask'
 }
 
 export enum ConfigurationValueTypes {
@@ -14,7 +17,7 @@ export enum ConfigurationValueTypes {
 }
 
 export interface DatabaseConfig {
-  key: ConfigurationKeys
+  key: ConfigurationKey
   type: ConfigurationValueTypes
   value: string
 }

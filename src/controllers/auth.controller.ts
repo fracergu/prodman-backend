@@ -1,6 +1,6 @@
 import { RequestError } from '@exceptions/RequestError'
 import { type RegisterRequest } from '@models/auth.model'
-import { ConfigurationKeys } from '@models/config.model'
+import { ConfigurationKey } from '@models/config.model'
 import { type Context } from '@utils/context'
 import bcrypt from 'bcrypt'
 import { type Request, type Response } from 'express'
@@ -36,7 +36,18 @@ export const login = async (
     if (user.role === 'admin') {
       req.session.cookie.maxAge = rememberMe ? ONE_DAY_MS * 30 : ONE_DAY_MS
     } else if (user.role === 'user') {
-      req.session.cookie.maxAge = 1000 * 60
+      const configEntry = await ctx.prisma.appConfig.findUnique({
+        where: {
+          key: 'workerAutoTimeout'
+        }
+      })
+      if (configEntry == null) {
+        throw new RequestError(400, "Config key 'workerAutoTimeout' not found.")
+      }
+      const workerSessionTimeout = parseInt(configEntry.value)
+
+      req.session.cookie.maxAge =
+        workerSessionTimeout === 0 ? ONE_DAY_MS : workerSessionTimeout * 1000
     }
     req.session.user = user.id
     res.status(200).send()
@@ -50,9 +61,9 @@ export const register = async (
   res: Response,
   ctx: Context
 ): Promise<void> => {
-  const config = await ctx.prisma.config.findUnique({
+  const config = await ctx.prisma.appConfig.findUnique({
     where: {
-      key: ConfigurationKeys.REGISTER_ENABLED
+      key: ConfigurationKey.REGISTER_ENABLED
     }
   })
 
@@ -81,4 +92,13 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     res.clearCookie('sid')
     res.status(200).send()
   })
+}
+
+export const session = async (
+  req: Request,
+  res: Response,
+  ctx: Context
+): Promise<void> => {
+  // Invalid session will be checked by the middleware
+  res.status(200).send()
 }

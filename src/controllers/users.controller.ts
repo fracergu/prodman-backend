@@ -9,7 +9,7 @@ import { getIntegerParam, isValidString } from '@utils/validation'
 import bcrypt from 'bcrypt'
 import { type Request, type Response } from 'express'
 
-const userSelector = {
+const querySelect = {
   id: true,
   name: true,
   lastName: true,
@@ -46,6 +46,8 @@ export const getUsers = async (
 
   if (isValidString(inactive)) {
     whereCriteria.active = !(inactive === 'true')
+  } else {
+    whereCriteria.active = true
   }
 
   const [count, users] = await ctx.prisma.$transaction([
@@ -54,7 +56,7 @@ export const getUsers = async (
       take: limit + 1,
       skip: (page - 1) * limit,
       where: whereCriteria,
-      select: userSelector
+      select: querySelect
     })
   ])
 
@@ -69,24 +71,6 @@ export const getUsers = async (
     nextPage: hasNextPage ? page + 1 : null,
     prevPage: page > 1 ? page - 1 : null
   })
-}
-
-export const getUser = async (
-  req: Request,
-  res: Response,
-  ctx: Context
-): Promise<void> => {
-  const { id } = req.params
-  const user = await ctx.prisma.user.findUnique({
-    where: { id: parseInt(id) },
-    select: userSelector
-  })
-
-  if (user == null) {
-    throw new RequestError(404, 'Not found')
-  }
-
-  res.status(200).json(user)
 }
 
 export const createUser = async (
@@ -106,7 +90,7 @@ export const createUser = async (
       password: hashedPassword,
       role
     },
-    select: userSelector
+    select: querySelect
   })
 
   res.status(201).json(user)
@@ -128,7 +112,7 @@ export const updateUser = async (
       role,
       active
     },
-    select: userSelector
+    select: querySelect
   })
 
   res.status(200).json(user)
@@ -178,7 +162,7 @@ export const updateUserCredentials = async (
   const user = await ctx.prisma.user.update({
     where: { id: parseInt(id) },
     data: updateData,
-    select: userSelector
+    select: querySelect
   })
 
   res.status(200).json(user)

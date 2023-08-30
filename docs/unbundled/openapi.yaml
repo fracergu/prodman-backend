@@ -1,0 +1,55 @@
+openapi: 3.0.0
+info:
+  title: Prodman API
+  version: '1'
+  description: This is the API documentation for Prodman, a production management tool.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Local server
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+paths:
+  /auth/login:
+    $ref: paths/auth_login.yaml
+  /auth/register:
+    $ref: paths/auth_register.yaml
+  /auth/logout:
+    $ref: paths/auth_logout.yaml
+  /auth/session:
+    $ref: paths/auth_session.yaml
+  /config:
+    $ref: paths/config.yaml
+  /users:
+    $ref: paths/users.yaml
+  /users/{id}:
+    $ref: paths/users_{id}.yaml
+  /users/{id}/credentials:
+    $ref: paths/users_{id}_credentials.yaml
+  /products/categories:
+    $ref: paths/products_categories.yaml
+  /products/categories/{id}:
+    $ref: paths/products_categories_{id}.yaml
+  /products:
+    $ref: paths/products.yaml
+  /products/{id}:
+    $ref: paths/products_{id}.yaml
+  /tasks:
+    $ref: paths/tasks.yaml
+  /tasks/{taskId}:
+    $ref: paths/tasks_{taskId}.yaml
+  /worker/active:
+    $ref: paths/worker_active.yaml
+  /worker/task:
+    $ref: paths/worker_task.yaml
+  /worker/completeSubtask:
+    $ref: paths/worker_completeSubtask_{id}.yaml
+  /production:
+    $ref: paths/production.yaml
+  /production/report:
+    $ref: paths/production_report.yaml

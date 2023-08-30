@@ -1,0 +1,61 @@
+type: object
+properties:
+  generalStats:
+    type: object
+    properties:
+      totalProduced:
+        type: integer
+        description: Total units produced.
+      totalEmployees:
+        type: integer
+        description: Total number of unique employees.
+      avgProductionPerEmployee:
+        type: number
+        description: Average production per employee.
+      highProductionDays:
+        type: array
+        items:
+          type: array
+          items:
+            type: string
+        description: List of days where production was higher than the average.
+      employeeRanking:
+        type: array
+        items:
+          type: array
+          items:
+            type: string
+        description: Ranking of employees by production quantity.
+      employeesList:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            name:
+              type: string
+            lastName:
+              type: string
+      productsList:
+        type: object
+        additionalProperties:
+          type: object
+          properties:
+            name:
+              type: string
+            reference:
+              type: string
+  byDay:
+    type: object
+    additionalProperties:
+      type: integer
+    description: Total production quantities grouped by day.
+  byEmployee:
+    type: object
+    additionalProperties:
+      type: integer
+    description: Total production quantities grouped by employee ID.
+  byProduct:
+    type: object
+    additionalProperties:
+      type: integer
+    description: Total production quantities grouped by product ID.

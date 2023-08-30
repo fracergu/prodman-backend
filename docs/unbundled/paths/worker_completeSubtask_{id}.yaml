@@ -1,0 +1,28 @@
+post:
+  operationId: completeSubtask
+  security:
+    - {}
+  tags:
+    - Worker
+  parameters:
+    - in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: Subtask ID
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CompleteSubtaskRequest.yaml
+  responses:
+    '200':
+      description: Subtask completed
+    '400':
+      description: Invalid input
+    '404':
+      description: Subtask not found
+    '500':
+      description: Internal server error

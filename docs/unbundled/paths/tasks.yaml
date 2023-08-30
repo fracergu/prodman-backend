@@ -1,0 +1,87 @@
+get:
+  operationId: getTasks
+  security:
+    - {}
+  summary: Get tasks with optional filters
+  tags:
+    - Tasks
+  parameters:
+    - name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 10
+    - name: page
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 1
+    - name: userId
+      in: query
+      required: false
+      schema:
+        type: string
+    - name: completed
+      in: query
+      required: false
+      schema:
+        type: string
+    - name: startDate
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+  responses:
+    '200':
+      description: Successful response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/TaskResponse.yaml
+              nextPage:
+                type: integer
+                nullable: true
+                example: null
+              prevPage:
+                type: integer
+                nullable: true
+                example: null
+              total:
+                type: integer
+                example: 1
+    '400':
+      description: Invalid input
+    '500':
+      description: Internal server error
+post:
+  operationId: createTask
+  security:
+    - {}
+  tags:
+    - Tasks
+  summary: Create a new task
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/TaskCreationRequest.yaml
+  responses:
+    '201':
+      description: Task created successfully
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/TaskResponse.yaml
+    '400':
+      description: Invalid request body
+    '500':
+      description: Internal server error

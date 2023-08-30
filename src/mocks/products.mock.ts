@@ -1,20 +1,20 @@
+import { type CategoryResponse } from '@models/products.model'
 import {
-  type Category,
   Prisma,
   type Product,
   type ProductCategory,
   type ProductComponent
 } from '@prisma/client'
 
-export const mockCategory: Category = {
+export const mockCategory: CategoryResponse = {
   id: 1,
   name: 'test',
   description: 'test'
 }
 
 type JoinedProduct = Product & {
-  ProductComponents: Array<ProductComponent & { Child: Product }>
-  ProductCategories: Array<ProductCategory & { Category: Category }>
+  productComponents: Array<ProductComponent & { child: Product }>
+  productCategories: Array<ProductCategory & { category: CategoryResponse }>
 }
 
 export const mockProductsArray: JoinedProduct[] = [
@@ -28,8 +28,8 @@ export const mockProductsArray: JoinedProduct[] = [
     createdAt: new Date('2023-08-09T11:08:36.434Z'),
     updatedAt: new Date('2023-08-09T11:08:36.434Z'),
     active: true,
-    ProductCategories: [],
-    ProductComponents: []
+    productCategories: [],
+    productComponents: []
   },
   {
     id: 6,
@@ -41,14 +41,14 @@ export const mockProductsArray: JoinedProduct[] = [
     createdAt: new Date('2023-08-09T11:09:10.524Z'),
     updatedAt: new Date('2023-08-09T11:09:10.524Z'),
     active: true,
-    ProductCategories: [],
-    ProductComponents: [
+    productCategories: [],
+    productComponents: [
       {
         id: 1,
         parentId: 6,
         childId: 5,
         quantity: 2,
-        Child: {
+        child: {
           id: 5,
           name: 'Product 1',
           description: 'Product 1 description',
@@ -72,25 +72,25 @@ export const mockProductsArray: JoinedProduct[] = [
     createdAt: new Date('2023-08-09T11:11:56.436Z'),
     updatedAt: new Date('2023-08-09T11:11:56.436Z'),
     active: true,
-    ProductCategories: [
+    productCategories: [
       {
         id: 5,
         productId: 7,
         categoryId: 1,
-        Category: {
+        category: {
           id: 1,
-          name: 'Category 1',
-          description: 'Category 1 description'
+          name: 'category 1',
+          description: 'category 1 description'
         }
       }
     ],
-    ProductComponents: [
+    productComponents: [
       {
         id: 2,
         parentId: 7,
         childId: 6,
         quantity: 5,
-        Child: {
+        child: {
           id: 6,
           name: 'Product 2',
           description: 'Product 2 description',
@@ -107,10 +107,12 @@ export const mockProductsArray: JoinedProduct[] = [
 ]
 
 type ProductParsed = Product & {
-  categories: Category[]
+  categories: CategoryResponse[]
   components: Array<{ quantity: number; product: Product }>
-  ProductCategories: Array<ProductCategory & { Category: Category }> | undefined
-  ProductComponents: Array<ProductComponent & { Child: Product }> | undefined
+  productCategories:
+    | Array<ProductCategory & { category: CategoryResponse }>
+    | undefined
+  productComponents: Array<ProductComponent & { child: Product }> | undefined
 }
 
 export const mockProductsParsedArray: ProductParsed[] = [
@@ -126,8 +128,8 @@ export const mockProductsParsedArray: ProductParsed[] = [
     reference: '00000',
     categories: [],
     components: [],
-    ProductCategories: undefined,
-    ProductComponents: undefined
+    productCategories: undefined,
+    productComponents: undefined
   },
   {
     id: 6,
@@ -156,8 +158,8 @@ export const mockProductsParsedArray: ProductParsed[] = [
         }
       }
     ],
-    ProductCategories: undefined,
-    ProductComponents: undefined
+    productCategories: undefined,
+    productComponents: undefined
   },
   {
     id: 7,
@@ -172,8 +174,8 @@ export const mockProductsParsedArray: ProductParsed[] = [
     categories: [
       {
         id: 1,
-        name: 'Category 1',
-        description: 'Category 1 description'
+        name: 'category 1',
+        description: 'category 1 description'
       }
     ],
     components: [
@@ -192,8 +194,8 @@ export const mockProductsParsedArray: ProductParsed[] = [
         }
       }
     ],
-    ProductCategories: undefined,
-    ProductComponents: undefined
+    productCategories: undefined,
+    productComponents: undefined
   }
 ]
 

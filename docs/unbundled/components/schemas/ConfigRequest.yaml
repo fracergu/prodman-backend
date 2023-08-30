@@ -1,0 +1,14 @@
+type: object
+properties:
+  registerEnabled:
+    type: boolean
+    description: Whether registration is enabled or not
+    example: true
+  workerAutoTimeout:
+    type: integer
+    description: The timeout for the worker to automatically log out
+    example: 60
+  workerGetNextSubtask:
+    type: boolean
+    description: Whether the worker should get the next subtask or the whole list of subtasks
+    example: true

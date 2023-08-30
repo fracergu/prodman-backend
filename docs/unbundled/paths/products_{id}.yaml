@@ -1,0 +1,56 @@
+put:
+  operationId: updateProduct
+  security:
+    - {}
+  tags:
+    - Products
+  summary: Update a product
+  parameters:
+    - in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: Product ID
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ProductRequest.yaml
+  responses:
+    '200':
+      description: Product updated
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ProductResponse.yaml
+    '400':
+      description: Invalid input
+    '404':
+      description: Product not found
+    '500':
+      description: Internal server error
+delete:
+  operationId: deleteProduct
+  security:
+    - {}
+  tags:
+    - Products
+  summary: Delete a product
+  parameters:
+    - in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: Product ID
+  responses:
+    '200':
+      description: Product deleted
+    '400':
+      description: Invalid input
+    '404':
+      description: Product not found
+    '500':
+      description: Internal server error

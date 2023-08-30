@@ -2,7 +2,7 @@ import { type User } from '@prisma/client'
 import { createMockContext, type MockContext } from '@utils/context'
 import { type NextFunction, type Request, type Response } from 'express'
 
-import { requireAdminRole } from '../auth.middleware'
+import { requireAdminRole, requireSession } from '../auth.middleware'
 import { RequestError } from '@exceptions/RequestError'
 
 describe('requireAdminRole Middleware', () => {
@@ -38,29 +38,49 @@ describe('requireAdminRole Middleware', () => {
     jest.clearAllMocks()
   })
 
-  it('should call next if user is admin', async () => {
-    req.session = { user: 'valid-user-id' } as any
-    context.prisma.user.findUnique.mockResolvedValue({ role: 'admin' } as User)
-    await requireAdminRole(req, res, context, next)
-    expect(next).toHaveBeenCalled()
-  })
+  describe('requireAdminRole', () => {
+    it('should call next if user is admin', async () => {
+      req.session = { user: 'valid-user-id' } as any
+      context.prisma.user.findUnique.mockResolvedValue({
+        role: 'admin'
+      } as User)
+      await requireAdminRole(req, res, context, next)
+      expect(next).toHaveBeenCalled()
+    })
 
-  it('should return 440 if user is not authenticated', async () => {
-    await requireAdminRole(req, res, context, next).catch(err => {
-      expect(err).toBeInstanceOf(RequestError)
-      expect(err.statusCode).toEqual(440)
-      expect(err.message).toEqual('Login timeout')
+    it('should return 440 if user is not authenticated', async () => {
+      await requireAdminRole(req, res, context, next).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.statusCode).toEqual(440)
+        expect(err.message).toEqual('Login timeout')
+      })
+    })
+
+    it('should return 403 if user role is not admin', async () => {
+      req.session = { user: 'valid-user-id' } as any
+      context.prisma.user.findUnique.mockResolvedValue({ role: 'user' } as User)
+      await requireAdminRole(req, res, context, next)
+      expect(res.status).toHaveBeenCalledWith(403)
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'error',
+        message: 'Forbidden'
+      })
     })
   })
 
-  it('should return 403 if user role is not admin', async () => {
-    req.session = { user: 'valid-user-id' } as any
-    context.prisma.user.findUnique.mockResolvedValue({ role: 'user' } as User)
-    await requireAdminRole(req, res, context, next)
-    expect(res.status).toHaveBeenCalledWith(403)
-    expect(res.json).toHaveBeenCalledWith({
-      status: 'error',
-      message: 'Forbidden'
+  describe('requireSession', () => {
+    it('should call next if user is authenticated', async () => {
+      req.session = { user: 'valid-user-id' } as any
+      await requireSession(req, res, context, next)
+      expect(next).toHaveBeenCalled()
+    })
+
+    it('should return 440 if user is not authenticated', async () => {
+      await requireSession(req, res, context, next).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.statusCode).toEqual(440)
+        expect(err.message).toEqual('Login timeout')
+      })
     })
   })
 })

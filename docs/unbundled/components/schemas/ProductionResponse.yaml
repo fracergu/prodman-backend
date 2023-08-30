@@ -1,0 +1,57 @@
+type: object
+properties:
+  id:
+    type: integer
+    example: 1
+  timestamp:
+    type: string
+    format: date-time
+    example: '2023-08-28T13:58:44.563Z'
+  quantityCompleted:
+    type: number
+    example: 1
+  subtask:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 5
+      quantity:
+        type: integer
+        example: 2
+      order:
+        type: integer
+        example: 0
+      status:
+        type: string
+        example: 'completed'
+      product:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 43
+          name:
+            type: string
+            example: 'Product 35'
+      task:
+        type: object
+        properties:
+          id:
+            type: integer
+            example: 1
+          status:
+            type: string
+            example: 'completed'
+          user:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 5
+              name:
+                type: string
+                example: 'Ana'
+              lastName:
+                type: string
+                example: 'Alvarez'

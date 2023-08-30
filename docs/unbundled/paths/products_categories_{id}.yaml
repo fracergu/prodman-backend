@@ -1,0 +1,56 @@
+put:
+  operationId: updateCategory
+  security:
+    - {}
+  tags:
+    - Product categories
+  summary: Update a category
+  parameters:
+    - in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: category ID
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CategoryRequest.yaml
+  responses:
+    '200':
+      description: category updated
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/CategoryResponse.yaml
+    '400':
+      description: Invalid input
+    '404':
+      description: category not found
+    '500':
+      description: Internal server error
+delete:
+  operationId: deleteCategory
+  security:
+    - {}
+  tags:
+    - Product categories
+  summary: Delete a category
+  parameters:
+    - in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: category ID
+  responses:
+    '200':
+      description: category deleted
+    '400':
+      description: Invalid input
+    '404':
+      description: category not found
+    '500':
+      description: Internal server error

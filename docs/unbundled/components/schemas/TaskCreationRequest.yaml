@@ -1,0 +1,19 @@
+type: object
+properties:
+  notes:
+    type: string
+    example: Some notes
+  userId:
+    type: integer
+    example: 1
+  status:
+    type: string
+    enum:
+      - pending
+      - completed
+      - cancelled
+    example: pending
+  subtasks:
+    type: array
+    items:
+      $ref: ./SubtaskCreationRequest.yaml

@@ -1,105 +1,117 @@
-Table Config {
-  key String [pk]
-  type String
-  value String
+Table appConfig {
+    key String PK
+    type String
+    value String
 }
 
 Table User {
-  id Int [pk, increment]
-  username String [unique]
-  name String
-  lastName String
-  password String
-  role String
-  active Boolean
-  createdAt DateTime
-  updatedAt DateTime
+    id Int PK
+    username String Unique
+    name String
+    lastName String
+    password String
+    role String
+    active Boolean 
+    createdAt DateTime 
+    updatedAt DateTime
 }
 
 Table Product {
-  id Int [pk, increment]
-  name String
-  description String
-  price Decimal
-  image String
-  reference String
-  createdAt DateTime
-  updatedAt DateTime
-  active Boolean
+    id Int PK
+    name String
+    description String
+    price Decimal
+    image String
+    reference String Unique
+    createdAt DateTime 
+    updatedAt DateTime
+    active Boolean 
 }
 
 Table ProductComponent {
-  id Int [pk, increment]
-  parentProduct Int
-  childProduct Int
-  quantity Int
-  Parent Product [ref: > Product.id]
-  Child Product [ref: > Product.id]
+    id Int PK
+    quantity Int
+    parentId Int
+    childId Int
 }
 
-Table Category {
-  id Int [pk, increment]
-  name String [unique]
-  description String
+Table category {
+    id Int PK
+    name String Unique
+    description String
 }
 
 Table ProductCategory {
-  id Int [pk, increment]
-  product Int
-  category Int
-  Product Product [ref: > Product.id]
-  Category Category [ref: > Category.id]
+    id Int PK
+    productId Int
+    categoryId Int
 }
 
 Table StockMovement {
-  id Int [pk, increment]
-  product Int
-  quantity Int
-  date DateTime
-  user Int
-  User User [ref: > User.id]
-  Product Product [ref: > Product.id]
+    id Int PK
+    quantity Int
+    timestamp DateTime
+    reason String
+    userId Int
+    productId Int
 }
 
 Table Task {
-  id Int [pk, increment]
-  worker Int
-  createdAt DateTime
-  notes String
-  User User [ref: > User.id]
+    id Int PK
+    createdAt DateTime
+    updatedAt DateTime
+    notes String
+    status String 
+    userId Int
 }
 
-Table SubTask {
-  id Int [pk, increment]
-  task Int
-  product Int
-  quantity Int
-  status String
-  notes String
-  Task Task [ref: > Task.id]
-  Product Product [ref: > Product.id]
+Table Subtask {
+    id Int PK
+    order Int
+    quantity Int
+    status String 
+    taskId Int
+    productId Int
 }
 
-Table SubTaskEvent {
-  id Int [pk, increment]
-  subtask Int
-  date DateTime
-  quantityCompleted Int
-  SubTask SubTask [ref: > SubTask.id]
+Table SubtaskEvent {
+    id Int PK
+    timestamp DateTime
+    quantityCompleted Int
+    subtaskId Int
 }
 
 Table Log {
-  id Int [pk, increment]
-  tableName String
-  rowId Int
-  action String
-  date DateTime
-  user Int
-  User User [ref: > User.id]
+    id Int PK
+    tableName String
+    rowId Int
+    action String
+    timestamp DateTime
+    userId Int
 }
 
 Table session {
-  sid String [pk]
-  sess String
-  expire DateTime
+    sid String PK
+    sess String
+    expire DateTime
 }
+
+// Relations
+
+Ref: User.id < StockMovement.userId
+Ref: User.id < Task.userId
+Ref: User.id < Log.userId
+
+Ref: Product.id < ProductComponent.parentId
+Ref: Product.id > ProductComponent.childId
+
+Ref: Product.id < ProductCategory.productId
+Ref: category.id < ProductCategory.categoryId
+
+Ref: Product.id < StockMovement.productId
+
+Ref: Product.id < Subtask.productId
+
+Ref: Task.id < Subtask.taskId
+
+Ref: Subtask.id < SubtaskEvent.subtaskId

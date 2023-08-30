@@ -1,0 +1,44 @@
+type: object
+properties:
+  name:
+    type: string
+    description: The product's name
+    example: Product 1
+  description:
+    type: string
+    description: The product's description
+    example: Product 1 description
+  price:
+    type: number
+    format: float
+    description: The product's price
+    example: 10.99
+  categories:
+    type: array
+    description: The product's category ids
+    items:
+      type: integer
+      example: 1
+  reference:
+    type: string
+    description: The product's reference
+    example: REF-001
+  active:
+    type: boolean
+    description: The product's active status
+    example: true
+    default: true
+  components:
+    type: array
+    description: The product's components
+    items:
+      type: object
+      properties:
+        productId:
+          type: integer
+          description: The component's product id
+          example: 2
+        quantity:
+          type: integer
+          description: The quantity of the component
+          example: 3

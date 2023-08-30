@@ -1,0 +1,12 @@
+get:
+  operationId: session
+  tags:
+    - Auth
+  summary: Endpoint to check if session is active
+  responses:
+    '200':
+      description: Successful operation
+    '440':
+      description: Login timeout
+    '500':
+      description: Internal server error

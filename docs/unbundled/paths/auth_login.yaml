@@ -1,0 +1,20 @@
+post:
+  operationId: login
+  security:
+    - basicAuth: []
+  tags:
+    - Auth
+  summary: Login a user
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/LoginRequest.yaml
+  responses:
+    '200':
+      description: Successful operation
+    '401':
+      description: Invalid credentials
+    '500':
+      description: Internal server error

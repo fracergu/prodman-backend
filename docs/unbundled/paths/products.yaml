@@ -1,0 +1,81 @@
+get:
+  operationId: getProducts
+  security:
+    - {}
+  tags:
+    - Products
+  summary: Get products with pagination and search
+  parameters:
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        default: 10
+      description: Limit number of products returned
+    - in: query
+      name: page
+      schema:
+        type: integer
+        default: 1
+      description: The current page number for results
+    - in: query
+      name: search
+      schema:
+        type: string
+      description: Search term to filter products by name
+    - in: query
+      name: category
+      schema:
+        type: integer
+      description: category id to filter products by category
+    - in: query
+      name: inactive
+      schema:
+        type: boolean
+      description: Filter inactive products
+  responses:
+    '200':
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/ProductResponse.yaml
+              nextPage:
+                type: integer
+                nullable: true
+              prevPage:
+                type: integer
+                nullable: true
+    '400':
+      description: Invalid input
+    '500':
+      description: Internal server error
+post:
+  operationId: createProduct
+  security:
+    - {}
+  tags:
+    - Products
+  summary: Create a product
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ProductRequest.yaml
+  responses:
+    '201':
+      description: Product created
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ProductResponse.yaml
+    '400':
+      description: Invalid input
+    '500':
+      description: Internal server error

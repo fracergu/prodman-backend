@@ -1,21 +1,35 @@
 import { RequestError } from '@exceptions/RequestError'
-import { type SubTask, type SubTaskEvent } from '@prisma/client'
+import { type TaskRequest } from '@models/tasks.model'
+import { type Subtask, type SubtaskEvent } from '@prisma/client'
 import { type Context } from '@utils/context'
 import { getIntegerParam, isValidString } from '@utils/validation'
 import { type Request, type Response } from 'express'
 
-const select = {
+const querySelect = {
   id: true,
   createdAt: true,
+  updatedAt: true,
   notes: true,
   status: true,
   userId: false,
-  User: {
+  user: {
     select: { id: true, name: true, lastName: true }
   },
-  SubTasks: {
-    include: {
-      SubTaskEvents: true
+  subtasks: {
+    select: {
+      id: true,
+      order: true,
+      quantity: true,
+      status: true,
+      productId: false,
+      taskId: false,
+      product: {
+        select: {
+          id: true,
+          name: true
+        }
+      },
+      subtaskEvents: true
     }
   }
 }
@@ -29,7 +43,7 @@ export const getTasks = async (
   const page = getIntegerParam(req.query.page as string, 1)
   const userId = req.query.userId as string
   const status = req.query.status as string
-  const startDate = req.query.startDate as string
+  const fromDate = req.query.startDate as string
 
   const whereCriteria: any = {}
   if (isValidString(userId)) {
@@ -38,20 +52,19 @@ export const getTasks = async (
   if (isValidString(status)) {
     whereCriteria.status = status
   }
-  if (isValidString(startDate)) {
-    whereCriteria.createdAt = { gte: new Date(startDate) }
+  if (isValidString(fromDate)) {
+    whereCriteria.createdAt = { gte: new Date(fromDate) }
   }
 
-  const tasks = await ctx.prisma.task.findMany({
-    take: limit + 1,
-    skip: (page - 1) * limit,
-    where: whereCriteria,
-    select
-  })
-
-  if (tasks.length === 0) {
-    throw new RequestError(404, 'Not found')
-  }
+  const [count, tasks] = await ctx.prisma.$transaction([
+    ctx.prisma.task.count({ where: whereCriteria }),
+    ctx.prisma.task.findMany({
+      take: limit + 1,
+      skip: (page - 1) * limit,
+      where: whereCriteria,
+      select: querySelect
+    })
+  ])
 
   const hasNextPage = tasks.length > limit
   if (hasNextPage) {
@@ -60,29 +73,42 @@ export const getTasks = async (
 
   const transformedTasks = tasks.map(task => ({
     ...task,
-    percentageCompleted: calculatePercentage(task.SubTasks),
-    subtasks: task.SubTasks.length,
-    SubTasks: undefined
+    percentageCompleted: calculatePercentage(task.subtasks),
+    subtasks: _orderSubtasks(task.subtasks)
   }))
 
   res.status(200).json({
     data: transformedTasks,
+    total: count,
     nextPage: hasNextPage ? page + 1 : null,
     prevPage: page > 1 ? page - 1 : null
   })
 }
 
-type SubtaskWithEvents = SubTask & { SubTaskEvents: SubTaskEvent[] }
+// FIXME: This should be done by Prismas
+function _orderSubtasks(subtasks: Subtask[]): Subtask[] {
+  return subtasks.sort((a, b) => a.order - b.order)
+}
 
-function calculatePercentage(subTasks: SubtaskWithEvents[]): number {
-  const totalQuantity = subTasks.reduce<number>(
+type SelectedSubtask = Omit<Subtask, 'taskId'> & {
+  subtaskEvents: Array<
+    Omit<SubtaskEvent, 'subtaskId'> & {
+      id: number
+      timestamp: Date
+      quantityCompleted: number
+    }
+  >
+}
+
+function calculatePercentage(subtasks: SelectedSubtask[]): number {
+  const totalQuantity = subtasks.reduce<number>(
     (sum, st) => sum + st.quantity,
     0
   )
-  const completedQuantity = subTasks.reduce<number>(
+  const completedQuantity = subtasks.reduce<number>(
     (sum, st) =>
       sum +
-      st.SubTaskEvents.reduce<number>(
+      st.subtaskEvents.reduce<number>(
         (eSum, event) => eSum + event.quantityCompleted,
         0
       ),
@@ -95,55 +121,32 @@ function calculatePercentage(subTasks: SubtaskWithEvents[]): number {
   return totalQuantity > 0 ? roundedValue : 0
 }
 
-export const getTask = async (
-  req: Request,
-  res: Response,
-  ctx: Context
-): Promise<void> => {
-  const taskId = req.params.id
-
-  const task = await ctx.prisma.task.findUnique({
-    where: { id: parseInt(taskId) },
-    select
-  })
-  if (task === null) {
-    throw new RequestError(404, 'Not found')
-  }
-
-  const tranformedTask = {
-    ...task,
-    percentageCompleted: calculatePercentage(task.SubTasks)
-  }
-  res.status(200).json(tranformedTask)
-}
 export const createTask = async (
   req: Request,
   res: Response,
   ctx: Context
 ): Promise<void> => {
-  const { notes, userId, status, subTasks } = req.body
+  const taskRequest = req.body as TaskRequest
 
-  if (
-    userId === undefined ||
-    subTasks === undefined ||
-    !Array.isArray(subTasks)
-  ) {
+  const { notes, status, userId, subtasks } = taskRequest
+
+  if (userId === undefined || subtasks === undefined) {
     throw new RequestError(400, 'Missing required fields')
   }
 
   const newTaskData = {
     notes,
-    status,
-    User: {
+    status: status !== undefined ? status : 'pending',
+    user: {
       connect: { id: userId }
     },
-    SubTasks: {
-      create: subTasks.map(subTask => ({
-        quantity: subTask.quantity,
-        notes: subTask.notes,
-        status: subTask.status,
-        Product: {
-          connect: { id: subTask.productId }
+    subtasks: {
+      create: subtasks?.map((subtask, idx) => ({
+        order: idx,
+        quantity: subtask.quantity,
+        status: subtask.status !== undefined ? subtask.status : 'pending',
+        product: {
+          connect: { id: subtask.productId }
         }
       }))
     }
@@ -151,12 +154,13 @@ export const createTask = async (
 
   const task = await ctx.prisma.task.create({
     data: newTaskData,
-    select
+    select: querySelect
   })
 
   const tranformedTask = {
     ...task,
-    percentageCompleted: calculatePercentage(task.SubTasks)
+    percentageCompleted: calculatePercentage(task.subtasks),
+    subtasks: _orderSubtasks(task.subtasks)
   }
 
   res.status(201).json(tranformedTask)
@@ -167,38 +171,38 @@ export const updateTask = async (
   res: Response,
   ctx: Context
 ): Promise<void> => {
-  if (req.params.id === undefined) {
-    throw new RequestError(400, 'Task ID is required')
+  if (req.params.id === undefined || isNaN(parseInt(req.params.id))) {
+    throw new RequestError(400, 'Invalid task ID')
   }
 
   const taskId = parseInt(req.params.id)
-  const { notes, userId, status, subTasks } = req.body
+  const { notes, userId, status, subtasks } = req.body as TaskRequest
 
   if (status !== undefined) {
-    await ctx.prisma.subTask.updateMany({
+    await ctx.prisma.subtask.updateMany({
       where: { taskId },
       data: { status }
     })
   }
 
-  if (subTasks !== undefined && Array.isArray(subTasks)) {
-    await ctx.prisma.subTask.deleteMany({ where: { taskId } })
+  if (subtasks !== undefined && Array.isArray(subtasks)) {
+    await ctx.prisma.subtask.deleteMany({ where: { taskId } })
   }
 
   const updatedTaskData = {
     notes,
     status,
-    User: {
+    user: {
       connect: { id: userId }
     },
-    SubTasks:
-      subTasks !== undefined
+    subtasks:
+      subtasks !== undefined
         ? {
-            create: subTasks.map((subTask: SubTask) => ({
-              quantity: subTask.quantity,
-              notes: subTask.notes,
+            create: subtasks.map((subtask: any, idx: number) => ({
+              order: idx,
+              quantity: subtask.quantity,
               status,
-              Product: { connect: { id: subTask.productId } }
+              product: { connect: { id: subtask.productId } }
             }))
           }
         : undefined
@@ -207,12 +211,13 @@ export const updateTask = async (
   const task = await ctx.prisma.task.update({
     where: { id: taskId },
     data: updatedTaskData,
-    select
+    select: querySelect
   })
 
   const transformedTask = {
     ...task,
-    percentageCompleted: calculatePercentage(task.SubTasks)
+    percentageCompleted: calculatePercentage(task.subtasks),
+    subtasks: _orderSubtasks(task.subtasks)
   }
 
   res.status(200).json(transformedTask)
@@ -223,16 +228,16 @@ export const deleteTask = async (
   res: Response,
   ctx: Context
 ): Promise<void> => {
-  if (req.params.id === undefined) {
-    throw new RequestError(400, 'Task ID is required')
+  if (req.params.id === undefined || isNaN(parseInt(req.params.id))) {
+    throw new RequestError(400, 'Invalid task ID')
   }
 
   const taskId = req.params.id
 
-  await ctx.prisma.subTaskEvent.deleteMany({
+  await ctx.prisma.subtaskEvent.deleteMany({
     where: { subtaskId: { in: [parseInt(taskId)] } }
   })
-  await ctx.prisma.subTask.deleteMany({
+  await ctx.prisma.subtask.deleteMany({
     where: { taskId: parseInt(taskId) }
   })
 

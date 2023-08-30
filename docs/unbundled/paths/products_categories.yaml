@@ -1,0 +1,53 @@
+get:
+  operationId: getCategories
+  security:
+    - {}
+  tags:
+    - Product categories
+  summary: Get all categories
+  parameters:
+    - in: query
+      name: search
+      schema:
+        type: string
+      description: Search term to filter categories by name or description
+      example: category
+  responses:
+    '200':
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: ../components/schemas/CategoryResponse.yaml
+    '401':
+      description: Unauthorized
+    '403':
+      description: Forbidden
+    '500':
+      description: Internal server error
+post:
+  operationId: createCategory
+  security:
+    - {}
+  tags:
+    - Product categories
+  summary: Create a category
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CategoryRequest.yaml
+  responses:
+    '201':
+      description: category created
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/CategoryResponse.yaml
+    '400':
+      description: Invalid input
+    '500':
+      description: Internal server error

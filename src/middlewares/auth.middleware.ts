@@ -22,3 +22,18 @@ export const requireAdminRole = async (
 
   next()
 }
+
+export const requireSession = async (
+  req: Request,
+  res: Response,
+  ctx: Context,
+  next: NextFunction
+) => {
+  const userId = req.session?.user
+
+  if (userId == null) {
+    throw new RequestError(440, 'Login timeout')
+  }
+
+  next()
+}

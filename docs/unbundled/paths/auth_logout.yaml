@@ -1,0 +1,14 @@
+delete:
+  operationId: logout
+  security:
+    - {}
+  tags:
+    - Auth
+  summary: Logout a user
+  responses:
+    '200':
+      description: Successful operation
+    '401':
+      description: Unauthorized
+    '500':
+      description: Internal server error

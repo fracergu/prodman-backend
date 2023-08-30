@@ -8,9 +8,11 @@ import { requireAdminRole } from 'src/middlewares/auth.middleware'
 
 const router = express.Router()
 
-router.use(withContext(requireAdminRole))
-
 router.get('/', withContext(getConfigurations))
-router.put('/', withContext(updateConfigurations))
+router.put(
+  '/',
+  withContext(requireAdminRole),
+  withContext(updateConfigurations)
+)
 
 export default router

@@ -1,0 +1,20 @@
+post:
+  operationId: register
+  security:
+    - {}
+  tags:
+    - Auth
+  summary: Register a new user
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/RegisterRequest.yaml
+  responses:
+    '201':
+      description: Created
+    '403':
+      description: Forbidden
+    '500':
+      description: Internal server error

@@ -1,6 +1,7 @@
 import { generateMockUsers } from '@mocks/usernames.mock'
 import {
-  ConfigurationKeys,
+  type AppConfig,
+  ConfigurationKey,
   ConfigurationValueTypes
 } from '@models/config.model'
 import { PrismaClient } from '@prisma/client'
@@ -9,31 +10,43 @@ import bcrypt from 'bcrypt'
 const prisma = new PrismaClient()
 
 export interface Configuration {
-  key: ConfigurationKeys
+  key: ConfigurationKey
   type: ConfigurationValueTypes
   value: string
 }
 
 const defaultConfigurations: Configuration[] = [
   {
-    key: ConfigurationKeys.REGISTER_ENABLED,
+    key: ConfigurationKey.REGISTER_ENABLED,
+    type: ConfigurationValueTypes.BOOLEAN,
+    value: 'true'
+  },
+  {
+    key: ConfigurationKey.WORKER_AUTO_TIMEOUT,
+    type: ConfigurationValueTypes.NUMBER,
+    value: '60'
+  },
+  {
+    key: ConfigurationKey.WORKER_GET_NEXT_SUBTASK,
     type: ConfigurationValueTypes.BOOLEAN,
     value: 'true'
   }
 ]
 
 export const ConfigurationTypeMapping: {
-  [key in ConfigurationKeys]: ConfigurationValueTypes
+  [key in ConfigurationKey]: ConfigurationValueTypes
 } = {
-  [ConfigurationKeys.REGISTER_ENABLED]: ConfigurationValueTypes.BOOLEAN
+  [ConfigurationKey.REGISTER_ENABLED]: ConfigurationValueTypes.BOOLEAN,
+  [ConfigurationKey.WORKER_AUTO_TIMEOUT]: ConfigurationValueTypes.NUMBER,
+  [ConfigurationKey.WORKER_GET_NEXT_SUBTASK]: ConfigurationValueTypes.BOOLEAN
 }
 
 export async function initializeDefaultConfigurations() {
-  const existingConfigurations = await prisma.config.findMany()
+  const existingConfigurations = await prisma.appConfig.findMany()
 
   if (existingConfigurations.length === 0) {
     for (const config of defaultConfigurations) {
-      await prisma.config.create({
+      await prisma.appConfig.create({
         data: config
       })
     }
@@ -72,8 +85,8 @@ export async function mockDevelopmentData() {
       Array.from({ length: 5 }).map(async (_, i) => {
         return await prisma.category.create({
           data: {
-            name: `Category ${i}`,
-            description: `Category ${i} description`
+            name: `category ${i}`,
+            description: `category ${i} description`
           }
         })
       })
@@ -90,10 +103,10 @@ export async function mockDevelopmentData() {
             description: `Product ${i} description`,
             price: Math.floor(Math.random() * 1000),
             reference: `REF-${digits5reference}`,
-            ProductCategories: hasCategory
+            productCategories: hasCategory
               ? {
                   create: {
-                    Category: {
+                    category: {
                       connect: {
                         id: categories[
                           Math.floor(Math.random() * categories.length)
@@ -112,20 +125,26 @@ export async function mockDevelopmentData() {
     productIds.forEach(async (productId, i) => {
       const hasComponents = Math.random() > 0.25 && i > 5
       const howManyComponents = Math.floor(Math.random() * 3) + 1
+      const addedComponents = new Set() // Para mantener registro de los componentes agregados
 
       if (hasComponents) {
         await prisma.product.update({
           where: { id: productId },
           data: {
-            ProductComponents: {
+            productComponents: {
               create: Array.from({ length: howManyComponents }).map(() => {
                 let componentId
                 do {
                   componentId = productIds[Math.floor(Math.random() * i)]
-                } while (componentId === productId) // Avoid self-referencing
+                } while (
+                  componentId === productId ||
+                  addedComponents.has(componentId)
+                )
+
+                addedComponents.add(componentId) // Agregar el componente al registro
 
                 return {
-                  Child: {
+                  child: {
                     connect: {
                       id: componentId
                     }
@@ -143,17 +162,17 @@ export async function mockDevelopmentData() {
       await prisma.task.create({
         data: {
           notes: `Task ${i} notes`,
-          User: {
+          user: {
             connect: {
               id: Math.floor(Math.random() * 10) + 1
             }
           },
-          SubTasks: {
+          subtasks: {
             create: Array.from({ length: 5 }).map((_, j) => ({
-              notes: `Subtask ${i}-${j} notes`,
               status: 'pending',
               quantity: Math.floor(Math.random() * 10) + 1,
-              Product: {
+              order: j,
+              product: {
                 connect: {
                   id: productIds[Math.floor(Math.random() * productIds.length)]
                 }
@@ -198,13 +217,13 @@ export function parseConfigurationValue(
 
 export function parseConfigurationArray(
   configurations: Configuration[]
-): Record<string, string | number | boolean> {
-  const parsedConfigurations: Record<string, string | number | boolean> = {}
+): AppConfig {
+  const parsedConfigurations: any = {}
   for (const config of configurations) {
     parsedConfigurations[config.key] = parseConfigurationValue(
       config.type,
       config.value
     )
   }
-  return parsedConfigurations
+  return parsedConfigurations as AppConfig
 }

@@ -1,0 +1,41 @@
+get:
+  operationId: getProductionReport
+  security:
+    - {}
+  tags:
+    - Production
+  summary: Generates a production report
+  parameters:
+    - name: userId
+      in: query
+      required: false
+      schema:
+        type: integer
+    - name: startDate
+      in: query
+      required: true
+      schema:
+        type: string
+        format: date
+    - name: endDate
+      in: query
+      required: true
+      schema:
+        type: string
+        format: date
+    - name: productId
+      in: query
+      required: false
+      schema:
+        type: integer
+  responses:
+    '200':
+      description: Successful response
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/ProductionReportResponse.yaml
+    '400':
+      description: Invalid input
+    '500':
+      description: Internal server error

@@ -1,7 +1,6 @@
 import {
   createTask,
   deleteTask,
-  getTask,
   getTasks,
   updateTask
 } from '@controllers/tasks.controller'
@@ -14,7 +13,6 @@ const router = express.Router()
 router.use(withContext(requireAdminRole))
 
 router.get('/', withContext(getTasks))
-router.get('/:id', withContext(getTask))
 router.post('/', withContext(createTask))
 router.put('/:id', withContext(updateTask))
 router.delete('/:id', withContext(deleteTask))

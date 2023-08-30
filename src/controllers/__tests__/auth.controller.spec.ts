@@ -93,10 +93,15 @@ describe('AuthController', () => {
         role: 'user'
       }
 
-      it('should set session cookie maxAge to 1 minute', async () => {
+      it('should set session cookie maxAge workerAutoTimeout appConfig value', async () => {
         req.headers.authorization = `Basic ${base64Credentials}`
         req.body = { rememberMe: true }
         context.prisma.user.findUnique.mockResolvedValueOnce(user)
+        context.prisma.appConfig.findUnique.mockResolvedValueOnce({
+          key: 'workerAutoTimeout',
+          type: 'number',
+          value: '60'
+        })
         await login(req, res, context)
         expect(res.status).toHaveBeenCalledWith(200)
         expect(req.session.cookie.maxAge).toEqual(1000 * 60)
@@ -143,11 +148,27 @@ describe('AuthController', () => {
         expect(err.message).toEqual('Invalid credentials')
       })
     })
+
+    it('should throw a 400 if workerAutoTimeout appConfig value is not found', async () => {
+      const user: User = {
+        ...mockUser,
+        role: 'user'
+      }
+      req.headers.authorization = `Basic ${base64Credentials}`
+      req.body = { rememberMe: true }
+      context.prisma.user.findUnique.mockResolvedValueOnce(user)
+      context.prisma.appConfig.findUnique.mockResolvedValueOnce(null)
+      await login(req, res, context).catch(err => {
+        expect(err).toBeInstanceOf(RequestError)
+        expect(err.statusCode).toEqual(400)
+        expect(err.message).toEqual("Config key 'workerAutoTimeout' not found.")
+      })
+    })
   })
 
   describe('register', () => {
     it('should create a new user', async () => {
-      context.prisma.config.findUnique.mockResolvedValueOnce({
+      context.prisma.appConfig.findUnique.mockResolvedValueOnce({
         key: 'registerEnabled',
         type: 'boolean',
         value: 'true'
@@ -177,7 +198,7 @@ describe('AuthController', () => {
     })
 
     it('should throw a 403 if register is disabled', async () => {
-      context.prisma.config.findUnique.mockResolvedValueOnce({
+      context.prisma.appConfig.findUnique.mockResolvedValueOnce({
         key: 'registerEnabled',
         type: 'boolean',
         value: 'false'
@@ -199,6 +220,14 @@ describe('AuthController', () => {
       await logout(req, res)
       expect(req.session.destroy).toHaveBeenCalled()
       expect(res.clearCookie).toHaveBeenCalledWith('sid')
+      expect(res.status).toHaveBeenCalledWith(200)
+    })
+  })
+
+  describe('session', () => {
+    it('should retun 200 if session is valid', async () => {
+      req.session.user = mockUser.id
+      await logout(req, res)
       expect(res.status).toHaveBeenCalledWith(200)
     })
   })

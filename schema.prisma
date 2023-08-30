@@ -7,7 +7,7 @@ generator client {
     provider = "prisma-client-js"
 }
 
-model Config {
+model appConfig {
     key   String @id
     type  String
     value String
@@ -23,9 +23,9 @@ model User {
     active         Boolean         @default(true)
     createdAt      DateTime        @default(now())
     updatedAt      DateTime        @updatedAt
-    Tasks          Task[]
-    StockMovements StockMovement[]
-    Logs           Log[]
+    tasks          Task[]
+    stockMovements StockMovement[]
+    logs           Log[]
 }
 
 model Product {
@@ -38,75 +38,81 @@ model Product {
     createdAt           DateTime           @default(now())
     updatedAt           DateTime           @updatedAt
     active              Boolean            @default(true)
-    ProductCategories   ProductCategory[]
-    StockMovements      StockMovement[]
-    SubTasks            SubTask[]
-    ProductComponents   ProductComponent[] @relation("ParentProduct")
-    ComponentOfProducts ProductComponent[] @relation("ChildProduct")
+    productCategories   ProductCategory[]
+    stockMovements      StockMovement[]
+    subtasks            Subtask[]
+    productComponents   ProductComponent[] @relation("ParentProduct")
+    componentOfProducts ProductComponent[] @relation("ChildProduct")
 }
 
 model ProductComponent {
     id       Int     @id @default(autoincrement())
     quantity Int
     parentId Int
-    Parent   Product @relation("ParentProduct", fields: [parentId], references: [id])
+    parent   Product @relation("ParentProduct", fields: [parentId], references: [id])
     childId  Int
-    Child    Product @relation("ChildProduct", fields: [childId], references: [id])
+    child    Product @relation("ChildProduct", fields: [childId], references: [id])
+
+    @@unique([parentId, childId], name: "UniqueParentChildCombination")
 }
 
-model Category {
+model category {
     id                Int               @id @default(autoincrement())
     name              String            @unique
     description       String?
-    ProductCategories ProductCategory[]
+    productCategories ProductCategory[]
 }
 
 model ProductCategory {
     id         Int      @id @default(autoincrement())
     productId  Int
-    Product    Product  @relation(fields: [productId], references: [id])
+    product    Product  @relation(fields: [productId], references: [id])
     categoryId Int
-    Category   Category @relation(fields: [categoryId], references: [id])
+    category   category @relation(fields: [categoryId], references: [id])
+
+    @@unique([productId, categoryId], name: "UniqueProductCategoryCombination")
 }
 
 model StockMovement {
     id        Int      @id @default(autoincrement())
     quantity  Int
-    date      DateTime
+    timestamp DateTime @default(now())
+    reason    String
     userId    Int
-    User      User     @relation(fields: [userId], references: [id])
+    user      User     @relation(fields: [userId], references: [id])
     productId Int
-    Product   Product  @relation(fields: [productId], references: [id])
+    product   Product  @relation(fields: [productId], references: [id])
 }
 
 model Task {
     id        Int       @id @default(autoincrement())
     createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
     notes     String?
     status    String    @default("pending")
     userId    Int
-    User      User      @relation(fields: [userId], references: [id])
-    SubTasks  SubTask[]
+    user      User      @relation(fields: [userId], references: [id])
+    subtasks  Subtask[]
 }
 
-model SubTask {
+model Subtask {
     id            Int            @id @default(autoincrement())
     quantity      Int
+    order         Int
     status        String         @default("pending")
-    notes         String?
     taskId        Int
-    Task          Task           @relation(fields: [taskId], references: [id])
+    task          Task           @relation(fields: [taskId], references: [id])
     productId     Int
-    Product       Product        @relation(fields: [productId], references: [id])
-    SubTaskEvents SubTaskEvent[]
+    product       Product        @relation(fields: [productId], references: [id])
+    subtaskEvents SubtaskEvent[]
 }
 
-model SubTaskEvent {
+model SubtaskEvent {
     id                Int      @id @default(autoincrement())
-    subtaskId         Int
-    date              DateTime
+    timestamp         DateTime @default(now())
     quantityCompleted Int
-    SubTask           SubTask  @relation(fields: [subtaskId], references: [id])
+    subtaskId         Int
+    subtask           Subtask  @relation(fields: [subtaskId], references: [id])
 }
 
 model Log {
@@ -114,7 +120,7 @@ model Log {
     tableName String
     rowId     Int
     action    String
-    date      DateTime
+    timestamp DateTime @default(now())
     userId    Int
     User      User     @relation(fields: [userId], references: [id])
 }

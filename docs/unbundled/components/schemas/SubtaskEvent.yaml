@@ -1,0 +1,9 @@
+type: object
+properties:
+  id:
+    type: integer
+  timestamp:
+    type: string
+    format: date-time
+  quantityCompleted:
+    type: integer

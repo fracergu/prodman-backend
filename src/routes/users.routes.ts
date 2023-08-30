@@ -1,6 +1,5 @@
 import {
   createUser,
-  getUser,
   getUsers,
   updateUser,
   updateUserCredentials
@@ -14,7 +13,6 @@ const router = express.Router()
 router.use(withContext(requireAdminRole))
 
 router.get('/', withContext(getUsers))
-router.get('/:id', withContext(getUser))
 router.post('/', withContext(createUser))
 router.put('/:id', withContext(updateUser))
 router.put('/:id/credentials', withContext(updateUserCredentials))

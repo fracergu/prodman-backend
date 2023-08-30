@@ -1,0 +1,22 @@
+type: object
+properties:
+  username:
+    type: string
+    description: The user's username
+    example: johndo3
+  name:
+    type: string
+    description: The user's name
+    example: John
+  lastName:
+    type: string
+    description: The user's last name
+    example: Doe
+  password:
+    type: string
+    description: The user's password
+    example: Very$ecureP@ssword
+  role:
+    type: string
+    description: The user's role
+    example: admin

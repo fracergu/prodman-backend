@@ -1,6 +1,5 @@
 import {
   createUser,
-  getUser,
   getUsers,
   updateUser,
   updateUserCredentials
@@ -82,7 +81,7 @@ describe('UsersController', () => {
       expect(context.prisma.user.findMany).toHaveBeenCalledWith({
         take: 2,
         skip: 1,
-        where: {},
+        where: { active: true },
         select: userSelector
       })
       expect(res.status).toHaveBeenCalledWith(200)
@@ -116,7 +115,8 @@ describe('UsersController', () => {
           OR: [
             { name: { contains: 'Jane', mode: 'insensitive' } },
             { lastName: { contains: 'Jane', mode: 'insensitive' } }
-          ]
+          ],
+          active: true
         },
         select: userSelector
       })
@@ -148,7 +148,7 @@ describe('UsersController', () => {
       expect(context.prisma.user.findMany).toHaveBeenCalledWith({
         take: 11,
         skip: 0,
-        where: { role: 'admin' },
+        where: { role: 'admin', active: true },
         select: userSelector
       })
       expect(res.status).toHaveBeenCalledWith(200)
@@ -163,48 +163,6 @@ describe('UsersController', () => {
     it('should pass any other error to the error handler', async () => {
       context.prisma.$transaction.mockRejectedValueOnce(new Error('error'))
       await getUsers(req, res, context).catch(err => {
-        expect(err).toBeInstanceOf(Error)
-        expect(err.message).toBe('error')
-      })
-    })
-  })
-
-  describe('getUser', () => {
-    it('should return a user by ID', async () => {
-      const mockUser: UserResponse = {
-        id: 1,
-        name: 'John',
-        lastName: 'Doe',
-        username: 'johndo3',
-        role: 'user',
-        active: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      req = { params: { id: '1' } } as any
-      context.prisma.user.findUnique.mockResolvedValue(mockUser as User)
-      await getUser(req, res, context)
-      expect(context.prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: 1 },
-        select: userSelector
-      })
-      expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith(mockUser)
-    })
-
-    it('should throw a 404 if user is not found', async () => {
-      req = { params: { id: '2' } } as any
-      context.prisma.user.findUnique.mockResolvedValue(null)
-      await getUser(req, res, context).catch(err => {
-        expect(err).toBeInstanceOf(RequestError)
-        expect(err.message).toBe('Not found')
-      })
-    })
-
-    it('should pass any other error to the error handler', async () => {
-      req = { params: { id: '2' } } as any
-      context.prisma.user.findUnique.mockRejectedValueOnce(new Error('error'))
-      await getUser(req, res, context).catch(err => {
         expect(err).toBeInstanceOf(Error)
         expect(err.message).toBe('error')
       })

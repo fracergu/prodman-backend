@@ -14,6 +14,11 @@ export const getIntegerParam = (
   return parsedValue
 }
 
-export const isValidString = (value: string): boolean => {
-  return value !== undefined && value !== '' && value !== null
+export const isValidString = (value: any): boolean => {
+  return (
+    value !== undefined &&
+    typeof value === 'string' &&
+    value !== '' &&
+    value !== null
+  )
 }

@@ -1,0 +1,25 @@
+type: object
+properties:
+  id:
+    type: integer
+  completed:
+    type: boolean
+  product:
+    type: object
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+  quantity:
+    type: integer
+  status:
+    type: string
+    enum:
+      - pending
+      - completed
+      - cancelled
+  events:
+    type: array
+    items:
+      $ref: ./SubtaskEvent.yaml

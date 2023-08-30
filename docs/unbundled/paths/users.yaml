@@ -1,0 +1,86 @@
+get:
+  operationId: getUsers
+  security:
+    - {}
+  tags:
+    - Users
+  summary: Get users with pagination and search
+  parameters:
+    - in: query
+      name: limit
+      schema:
+        type: integer
+        default: 10
+      description: Limit number of users returned
+    - in: query
+      name: page
+      schema:
+        type: integer
+        default: 1
+      description: The current page number for results
+    - in: query
+      name: search
+      schema:
+        type: string
+      description: Search term to filter users by name
+    - in: query
+      name: role
+      schema:
+        type: string
+      description: Role term to filter users by role
+    - in: query
+      name: inactive
+      schema:
+        type: boolean
+      description: Inactive term to filter users by active/inactive
+  responses:
+    '200':
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: array
+                items:
+                  $ref: ../components/schemas/UserResponse.yaml
+              nextPage:
+                type: integer
+                nullable: true
+                example: null
+              prevPage:
+                type: integer
+                nullable: true
+                example: null
+              total:
+                type: integer
+                example: 1
+    '400':
+      description: Invalid input
+    '500':
+      description: Internal server error
+post:
+  operationId: createUser
+  security:
+    - {}
+  tags:
+    - Users
+  summary: Create a user
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/UserCreationRequest.yaml
+  responses:
+    '201':
+      description: User created
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/UserResponse.yaml
+    '400':
+      description: Invalid input
+    '500':
+      description: Internal server error

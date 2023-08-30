@@ -3,17 +3,17 @@ info:
   title: Prodman API
   version: '1'
   description: This is the API documentation for Prodman, a production management tool.
-
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 servers:
   - url: http://localhost:3000/api/v1
     description: Local server
-
 components:
   securitySchemes:
     basicAuth:
       type: http
       scheme: basic
-
   schemas:
     LoginRequest:
       type: object
@@ -41,53 +41,40 @@ components:
           type: string
           description: The user's password
           example: Very$ecureP@ssword
-    ConfigRequest:
-      type: object
-      properties:
-        key:
-          type: string
-          description: The key of the configuration
-          example: 'configKey1'
-        value:
-          oneOf:
-            - type: string
-            - type: number
-            - type: boolean
-          description: The value of the configuration
-          example: false
     ConfigResponse:
       type: object
       properties:
-        key:
-          type: string
-        value:
-          oneOf:
-            - type: string
-            - type: number
-            - type: boolean
-    UserCreationRequest:
+        registerEnabled:
+          type: boolean
+          description: Whether registration is enabled or not
+          example: true
+        workerAutoTimeout:
+          type: integer
+          description: The timeout for the worker to automatically log out
+          example: 60
+        workerGetNextSubtask:
+          type: boolean
+          description: >-
+            Whether the worker should get the next subtask or the whole list of
+            subtasks
+          example: true
+    ConfigRequest:
       type: object
       properties:
-        username:
-          type: string
-          description: The user's username
-          example: johndo3
-        name:
-          type: string
-          description: The user's name
-          example: John
-        lastName:
-          type: string
-          description: The user's last name
-          example: Doe
-        password:
-          type: string
-          description: The user's password
-          example: Very$ecureP@ssword
-        role:
-          type: string
-          description: The user's role
-          example: admin
+        registerEnabled:
+          type: boolean
+          description: Whether registration is enabled or not
+          example: true
+        workerAutoTimeout:
+          type: integer
+          description: The timeout for the worker to automatically log out
+          example: 60
+        workerGetNextSubtask:
+          type: boolean
+          description: >-
+            Whether the worker should get the next subtask or the whole list of
+            subtasks
+          example: true
     UserResponse:
       type: object
       properties:
@@ -125,6 +112,29 @@ components:
           format: date-time
           description: The user's update date
           example: '2021-01-01T00:00:00.000Z'
+    UserCreationRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          description: The user's username
+          example: johndo3
+        name:
+          type: string
+          description: The user's name
+          example: John
+        lastName:
+          type: string
+          description: The user's last name
+          example: Doe
+        password:
+          type: string
+          description: The user's password
+          example: Very$ecureP@ssword
+        role:
+          type: string
+          description: The user's role
+          example: admin
     UserUpdateRequest:
       type: object
       properties:
@@ -165,22 +175,22 @@ components:
         name:
           type: string
           description: The category's name
-          example: Category 1
+          example: category 1
         description:
           type: string
           description: The category's description
-          example: Category 1 description
+          example: category 1 description
     CategoryRequest:
       type: object
       properties:
         name:
           type: string
           description: The category's name
-          example: Category 1
+          example: category 1
         description:
           type: string
           description: The category's description
-          example: Category 1 description
+          example: category 1 description
     ProductResponse:
       type: object
       properties:
@@ -218,8 +228,13 @@ components:
           type: array
           description: The product's categories
           items:
-            schema:
+            schema: null
             $ref: '#/components/schemas/CategoryResponse'
+        active:
+          type: boolean
+          description: The product's active status
+          example: true
+          default: true
         components:
           type: array
           description: The product's components
@@ -289,6 +304,11 @@ components:
           type: string
           description: The product's reference
           example: REF-001
+        active:
+          type: boolean
+          description: The product's active status
+          example: true
+          default: true
         components:
           type: array
           description: The product's components
@@ -303,142 +323,262 @@ components:
                 type: integer
                 description: The quantity of the component
                 example: 3
-    TaskListResponse:
-      type: 'object'
-      properties:
-        data:
-          type: 'array'
-          items:
-            $ref: '#/components/schemas/TaskListItem'
-        nextPage:
-          type: 'integer'
-          nullable: true
-          example: null
-        prevPage:
-          type: 'integer'
-          nullable: true
-          example: null
-
-    TaskResponse:
-      type: 'object'
-      properties:
-        data:
-          $ref: '#/components/schemas/TaskItem'
-
-    TaskListItem:
-      type: 'object'
+    SubtaskEvent:
+      type: object
       properties:
         id:
-          type: 'integer'
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+        quantityCompleted:
+          type: integer
+    Subtask:
+      type: object
+      properties:
+        id:
+          type: integer
+        completed:
+          type: boolean
+        product:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        quantity:
+          type: integer
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+            - cancelled
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubtaskEvent'
+    TaskResponse:
+      type: object
+      properties:
+        id:
+          type: integer
           example: 1
-        userName:
-          type: 'string'
-          example: 'John Doe'
         percentageCompleted:
-          type: 'number'
+          type: number
           example: 0.5
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            name:
+              type: string
+              example: John
+            lastName:
+              type: string
+              example: Doe
         createdAt:
-          type: 'string'
-          format: 'date-time'
+          type: string
+          format: date-time
+          example: '2021-01-01T00:00:00.000Z'
+        updatedAt:
+          type: string
+          format: date-time
           example: '2021-01-01T00:00:00.000Z'
         notes:
-          type: 'string'
-          example: 'Some notes'
+          type: string
+          example: Some notes
         subtasks:
-          type: 'integer'
-          example: 2
-
-    TaskItem:
-      type: 'object'
-      properties:
-        id:
-          type: 'integer'
-        user:
-          $ref: '#/components/schemas/UserResponse'
-        percentageCompleted:
-          type: 'number'
-        createdAt:
-          type: 'string'
-          format: 'date-time'
-        subTasks:
-          type: 'array'
+          type: array
           items:
-            $ref: '#/components/schemas/SubTask'
-    TaskCreateRequest:
-      type: 'object'
-      properties:
-        notes:
-          type: 'string'
-          example: 'Some notes'
-        userId:
-          type: 'integer'
-          example: 1
-        status:
-          type: 'string'
-          enum: ['pending', 'completed', 'cancelled']
-          example: 'pending'
-        subTasks:
-          type: 'array'
-          items:
-            $ref: '#/components/schemas/SubTaskCreateRequest'
-
-    SubTaskCreateRequest:
-      type: 'object'
+            $ref: '#/components/schemas/Subtask'
+    SubtaskCreationRequest:
+      type: object
       properties:
         productId:
-          type: 'integer'
+          type: integer
           example: 1
         quantity:
-          type: 'integer'
+          type: integer
           example: 1
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+            - cancelled
+          example: pending
+    TaskCreationRequest:
+      type: object
+      properties:
         notes:
-          type: 'string'
-          example: 'Some notes'
+          type: string
+          example: Some notes
+        userId:
+          type: integer
+          example: 1
         status:
-          type: 'string'
-          enum: ['pending', 'completed', 'cancelled']
-          example: 'pending'
-
-    SubTask:
-      type: 'object'
-      properties:
-        id:
-          type: 'integer'
-        name:
-          type: 'string'
-        completed:
-          type: 'boolean'
-        product:
-          $ref: '#/components/schemas/ProductResponse'
-        quantity:
-          type: 'integer'
-        status:
-          type: 'string'
-          enum: ['pending', 'completed', 'cancelled']
-        events:
-          type: 'array'
+          type: string
+          enum:
+            - pending
+            - completed
+            - cancelled
+          example: pending
+        subtasks:
+          type: array
           items:
-            $ref: '#/components/schemas/SubTaskEvent'
-
-    SubTaskEvent:
-      type: 'object'
+            $ref: '#/components/schemas/SubtaskCreationRequest'
+    ActiveWorkersResponse:
+      type: array
       properties:
         id:
-          type: 'integer'
-        date:
-          type: 'string'
-          format: 'date-time'
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+    CompleteSubtaskRequest:
+      type: object
+      properties:
         quantityCompleted:
-          type: 'integer'
-
+          type: integer
+          description: The quantity of the subtask completed
+          example: 3
+    ProductionResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        timestamp:
+          type: string
+          format: date-time
+          example: '2023-08-28T13:58:44.563Z'
+        quantityCompleted:
+          type: number
+          example: 1
+        subtask:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 5
+            quantity:
+              type: integer
+              example: 2
+            order:
+              type: integer
+              example: 0
+            status:
+              type: string
+              example: completed
+            product:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 43
+                name:
+                  type: string
+                  example: Product 35
+            task:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                status:
+                  type: string
+                  example: completed
+                user:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      example: 5
+                    name:
+                      type: string
+                      example: Ana
+                    lastName:
+                      type: string
+                      example: Alvarez
+    ProductionReportResponse:
+      type: object
+      properties:
+        generalStats:
+          type: object
+          properties:
+            totalProduced:
+              type: integer
+              description: Total units produced.
+            totalEmployees:
+              type: integer
+              description: Total number of unique employees.
+            avgProductionPerEmployee:
+              type: number
+              description: Average production per employee.
+            highProductionDays:
+              type: array
+              items:
+                type: array
+                items:
+                  type: string
+              description: List of days where production was higher than the average.
+            employeeRanking:
+              type: array
+              items:
+                type: array
+                items:
+                  type: string
+              description: Ranking of employees by production quantity.
+            employeesList:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  lastName:
+                    type: string
+            productsList:
+              type: object
+              additionalProperties:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  reference:
+                    type: string
+        byDay:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Total production quantities grouped by day.
+        byEmployee:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Total production quantities grouped by employee ID.
+        byProduct:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Total production quantities grouped by product ID.
 paths:
   /auth/login:
     post:
+      operationId: login
+      security:
+        - basicAuth: []
       tags:
         - Auth
       summary: Login a user
-      security:
-        - basicAuth: []
       requestBody:
         required: true
         content:
@@ -446,14 +586,17 @@ paths:
             schema:
               $ref: '#/components/schemas/LoginRequest'
       responses:
-        200:
+        '200':
           description: Successful operation
-        401:
+        '401':
           description: Invalid credentials
-        500:
+        '500':
           description: Internal server error
   /auth/register:
     post:
+      operationId: register
+      security:
+        - {}
       tags:
         - Auth
       summary: Register a new user
@@ -464,45 +607,65 @@ paths:
             schema:
               $ref: '#/components/schemas/RegisterRequest'
       responses:
-        201:
+        '201':
           description: Created
-        403:
+        '403':
           description: Forbidden
-        500:
+        '500':
           description: Internal server error
   /auth/logout:
     delete:
+      operationId: logout
+      security:
+        - {}
       tags:
         - Auth
       summary: Logout a user
       responses:
-        200:
+        '200':
           description: Successful operation
-        500:
+        '401':
+          description: Unauthorized
+        '500':
           description: Internal server error
-
+  /auth/session:
+    get:
+      operationId: session
+      tags:
+        - Auth
+      summary: Endpoint to check if session is active
+      responses:
+        '200':
+          description: Successful operation
+        '440':
+          description: Login timeout
+        '500':
+          description: Internal server error
   /config:
     get:
+      operationId: getConfig
+      security:
+        - {}
       tags:
         - Config
       summary: Get all configurations
       responses:
-        200:
+        '200':
           description: Successful operation
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  registerEnabled:
-                    type: boolean
-        401:
+                $ref: '#/components/schemas/ConfigResponse'
+        '401':
           description: Unauthorized
-        403:
+        '403':
           description: Forbidden
-        500:
+        '500':
           description: Internal server error
     put:
+      operationId: updateConfig
+      security:
+        - {}
       tags:
         - Config
       summary: Update a configuration
@@ -513,21 +676,23 @@ paths:
             schema:
               $ref: '#/components/schemas/ConfigRequest'
       responses:
-        200:
+        '200':
           description: Successful operation
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ConfigResponse'
-        401:
+        '401':
           description: Unauthorized
-        403:
+        '403':
           description: Forbidden
-        500:
+        '500':
           description: Internal server error
-
   /users:
     get:
+      operationId: getUsers
+      security:
+        - {}
       tags:
         - Users
       summary: Get users with pagination and search
@@ -557,10 +722,10 @@ paths:
         - in: query
           name: inactive
           schema:
-            type: string
+            type: boolean
           description: Inactive term to filter users by active/inactive
       responses:
-        200:
+        '200':
           description: Successful operation
           content:
             application/json:
@@ -582,12 +747,14 @@ paths:
                   total:
                     type: integer
                     example: 1
-        400:
+        '400':
           description: Invalid input
-        500:
+        '500':
           description: Internal server error
-
     post:
+      operationId: createUser
+      security:
+        - {}
       tags:
         - Users
       summary: Create a user
@@ -598,42 +765,21 @@ paths:
             schema:
               $ref: '#/components/schemas/UserCreationRequest'
       responses:
-        201:
+        '201':
           description: User created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-        400:
+        '400':
           description: Invalid input
-        500:
+        '500':
           description: Internal server error
   /users/{id}:
-    get:
-      tags:
-        - Users
-      summary: Get a user by id
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: User ID
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserResponse'
-        400:
-          description: Invalid input
-        404:
-          description: User not found
-        500:
-          description: Internal server error
     put:
+      operationId: updateUser
+      security:
+        - {}
       tags:
         - Users
       summary: Update a user
@@ -651,20 +797,23 @@ paths:
             schema:
               $ref: '#/components/schemas/UserUpdateRequest'
       responses:
-        200:
+        '200':
           description: User updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-        400:
+        '400':
           description: Invalid input
-        404:
+        '404':
           description: User not found
-        500:
+        '500':
           description: Internal server error
   /users/{id}/credentials:
     put:
+      operationId: updateUserCredentials
+      security:
+        - {}
       tags:
         - Users
       summary: Update user's username or password
@@ -682,25 +831,35 @@ paths:
             schema:
               $ref: '#/components/schemas/UserCredentialsRequest'
       responses:
-        200:
+        '200':
           description: Credentials updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
-        400:
+        '400':
           description: Invalid input
-        404:
+        '404':
           description: User not found
-        500:
+        '500':
           description: Internal server error
   /products/categories:
     get:
+      operationId: getCategories
+      security:
+        - {}
       tags:
         - Product categories
       summary: Get all categories
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search term to filter categories by name or description
+          example: category
       responses:
-        200:
+        '200':
           description: Successful operation
           content:
             application/json:
@@ -708,13 +867,16 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/CategoryResponse'
-        401:
+        '401':
           description: Unauthorized
-        403:
+        '403':
           description: Forbidden
-        500:
+        '500':
           description: Internal server error
     post:
+      operationId: createCategory
+      security:
+        - {}
       tags:
         - Product categories
       summary: Create a category
@@ -725,18 +887,21 @@ paths:
             schema:
               $ref: '#/components/schemas/CategoryRequest'
       responses:
-        201:
-          description: Category created
+        '201':
+          description: category created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CategoryResponse'
-        400:
+        '400':
           description: Invalid input
-        500:
+        '500':
           description: Internal server error
   /products/categories/{id}:
     put:
+      operationId: updateCategory
+      security:
+        - {}
       tags:
         - Product categories
       summary: Update a category
@@ -746,7 +911,7 @@ paths:
           schema:
             type: integer
           required: true
-          description: Category ID
+          description: category ID
       requestBody:
         required: true
         content:
@@ -754,19 +919,22 @@ paths:
             schema:
               $ref: '#/components/schemas/CategoryRequest'
       responses:
-        200:
-          description: Category updated
+        '200':
+          description: category updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CategoryResponse'
-        400:
+        '400':
           description: Invalid input
-        404:
-          description: Category not found
-        500:
+        '404':
+          description: category not found
+        '500':
           description: Internal server error
     delete:
+      operationId: deleteCategory
+      security:
+        - {}
       tags:
         - Product categories
       summary: Delete a category
@@ -776,22 +944,21 @@ paths:
           schema:
             type: integer
           required: true
-          description: Category ID
+          description: category ID
       responses:
-        200:
-          description: Category deleted
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CategoryResponse'
-        400:
+        '200':
+          description: category deleted
+        '400':
           description: Invalid input
-        404:
-          description: Category not found
-        500:
+        '404':
+          description: category not found
+        '500':
           description: Internal server error
   /products:
     get:
+      operationId: getProducts
+      security:
+        - {}
       tags:
         - Products
       summary: Get products with pagination and search
@@ -817,9 +984,14 @@ paths:
           name: category
           schema:
             type: integer
-          description: Category id to filter products by category
+          description: category id to filter products by category
+        - in: query
+          name: inactive
+          schema:
+            type: boolean
+          description: Filter inactive products
       responses:
-        200:
+        '200':
           description: Successful operation
           content:
             application/json:
@@ -836,11 +1008,14 @@ paths:
                   prevPage:
                     type: integer
                     nullable: true
-        400:
+        '400':
           description: Invalid input
-        500:
+        '500':
           description: Internal server error
     post:
+      operationId: createProduct
+      security:
+        - {}
       tags:
         - Products
       summary: Create a product
@@ -851,43 +1026,21 @@ paths:
             schema:
               $ref: '#/components/schemas/ProductRequest'
       responses:
-        201:
+        '201':
           description: Product created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductResponse'
-        400:
+        '400':
           description: Invalid input
-        500:
+        '500':
           description: Internal server error
-
   /products/{id}:
-    get:
-      tags:
-        - Products
-      summary: Get a product by id
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          required: true
-          description: Product ID
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ProductResponse'
-        400:
-          description: Invalid input
-        404:
-          description: Product not found
-        500:
-          description: Internal server error
     put:
+      operationId: updateProduct
+      security:
+        - {}
       tags:
         - Products
       summary: Update a product
@@ -905,135 +1058,360 @@ paths:
             schema:
               $ref: '#/components/schemas/ProductRequest'
       responses:
-        200:
+        '200':
           description: Product updated
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ProductResponse'
-        400:
+        '400':
           description: Invalid input
-        404:
+        '404':
           description: Product not found
-        500:
+        '500':
+          description: Internal server error
+    delete:
+      operationId: deleteProduct
+      security:
+        - {}
+      tags:
+        - Products
+      summary: Delete a product
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Product ID
+      responses:
+        '200':
+          description: Product deleted
+        '400':
+          description: Invalid input
+        '404':
+          description: Product not found
+        '500':
           description: Internal server error
   /tasks:
     get:
-      summary: 'Get tasks with optional filters'
+      operationId: getTasks
+      security:
+        - {}
+      summary: Get tasks with optional filters
       tags:
-        - 'Tasks'
+        - Tasks
       parameters:
-        - name: 'limit'
-          in: 'query'
+        - name: limit
+          in: query
           required: false
           schema:
-            type: 'integer'
+            type: integer
             default: 10
-        - name: 'page'
-          in: 'query'
+        - name: page
+          in: query
           required: false
           schema:
-            type: 'integer'
+            type: integer
             default: 1
-        - name: 'userId'
-          in: 'query'
+        - name: userId
+          in: query
           required: false
           schema:
-            type: 'string'
-        - name: 'completed'
-          in: 'query'
+            type: string
+        - name: completed
+          in: query
           required: false
           schema:
-            type: 'string'
-        - name: 'startDate'
-          in: 'query'
+            type: string
+        - name: startDate
+          in: query
           required: false
           schema:
-            type: 'string'
-            format: 'date'
+            type: string
+            format: date
       responses:
         '200':
-          description: 'Successful response'
+          description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TaskListResponse'
-        '404':
-          description: 'Not found'
-
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TaskResponse'
+                  nextPage:
+                    type: integer
+                    nullable: true
+                    example: null
+                  prevPage:
+                    type: integer
+                    nullable: true
+                    example: null
+                  total:
+                    type: integer
+                    example: 1
+        '400':
+          description: Invalid input
+        '500':
+          description: Internal server error
     post:
+      operationId: createTask
+      security:
+        - {}
       tags:
-        - 'Tasks'
-      summary: 'Create a new task'
+        - Tasks
+      summary: Create a new task
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskCreateRequest'
+              $ref: '#/components/schemas/TaskCreationRequest'
       responses:
         '201':
-          description: 'Task created successfully'
+          description: Task created successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskResponse'
-
+        '400':
+          description: Invalid request body
+        '500':
+          description: Internal server error
   /tasks/{taskId}:
-    get:
-      tags:
-        - 'Tasks'
-      summary: 'Get a single task by ID'
-      parameters:
-        - name: 'taskId'
-          in: 'path'
-          required: true
-          schema:
-            type: 'integer'
-      responses:
-        '200':
-          description: 'Successful response'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TaskResponse'
-        '404':
-          description: 'Task not found'
-
     put:
+      operationId: updateTask
+      security:
+        - {}
       tags:
-        - 'Tasks'
-      summary: 'Update a task by ID'
+        - Tasks
+      summary: Update a task by ID
       parameters:
-        - name: 'taskId'
-          in: 'path'
+        - name: taskId
+          in: path
           required: true
           schema:
-            type: 'integer'
+            type: integer
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TaskCreateRequest'
+              $ref: '#/components/schemas/TaskCreationRequest'
       responses:
         '200':
-          description: 'Task updated successfully'
+          description: Task updated successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TaskResponse'
-
+        '400':
+          description: Invalid task ID
+        '404':
+          description: Not found
+        '500':
+          description: Internal server error'
     delete:
+      operationId: deleteTask
+      security:
+        - {}
       tags:
-        - 'Tasks'
-      summary: 'Delete a task by ID'
+        - Tasks
+      summary: Delete a task by ID
       parameters:
-        - name: 'taskId'
-          in: 'path'
+        - name: taskId
+          in: path
           required: true
           schema:
-            type: 'integer'
+            type: integer
       responses:
         '204':
-          description: 'Task deleted successfully'
+          description: Task deleted successfully
+        '400':
+          description: Invalid task ID
+        '404':
+          description: Not found
+        '500':
+          description: Internal server error
+  /worker/active:
+    get:
+      operationId: active
+      tags:
+        - Worker
+      summary: Get all active workers
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveWorkersResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal server error
+  /worker/task:
+    get:
+      operationId: task
+      tags:
+        - Worker
+      summary: Get next task and subtasks
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '500':
+          description: Internal server error
+  /worker/completeSubtask:
+    post:
+      operationId: completeSubtask
+      security:
+        - {}
+      tags:
+        - Worker
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Subtask ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteSubtaskRequest'
+      responses:
+        '200':
+          description: Subtask completed
+        '400':
+          description: Invalid input
+        '404':
+          description: Subtask not found
+        '500':
+          description: Internal server error
+  /production:
+    get:
+      operationId: getProduction
+      security:
+        - {}
+      tags:
+        - Production
+      summary: Get all productions
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 25
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: productId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductionResponse'
+                  nextPage:
+                    type: integer
+                    nullable: true
+                    example: null
+                  prevPage:
+                    type: integer
+                    nullable: true
+                    example: null
+                  total:
+                    type: integer
+                    example: 1
+        '400':
+          description: Invalid input
+        '500':
+          description: Internal server error
+  /production/report:
+    get:
+      operationId: getProductionReport
+      security:
+        - {}
+      tags:
+        - Production
+      summary: Generates a production report
+      parameters:
+        - name: userId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: productId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionReportResponse'
+        '400':
+          description: Invalid input
+        '500':
+          description: Internal server error

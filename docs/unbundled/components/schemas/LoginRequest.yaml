@@ -1,0 +1,6 @@
+type: object
+properties:
+  rememberMe:
+    type: boolean
+    description: Whether to remember the user or not
+    example: true

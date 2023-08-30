@@ -2,8 +2,8 @@ import {
   createCategory,
   createProduct,
   deleteCategory,
+  deleteProduct,
   getCategories,
-  getProduct,
   getProducts,
   updateCategory,
   updateProduct
@@ -15,9 +15,8 @@ import {
   mockProductsArray,
   mockProductsParsedArray
 } from '@mocks/products.mock'
-import { Category } from '@prisma/client'
 import { MockContext, createMockContext } from '@utils/context'
-import { type NextFunction, type Request, type Response } from 'express'
+import { type Request, type Response } from 'express'
 
 describe('ProductsController', () => {
   let context: MockContext
@@ -63,6 +62,34 @@ describe('ProductsController', () => {
     })
   })
 
+  describe('getCategories with search query', () => {
+    it('should return all products categories', async () => {
+      req.query = { search: 'test' }
+      context.prisma.category.findMany.mockResolvedValue([mockCategory])
+      await getCategories(req, res, context)
+      expect(context.prisma.category.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            {
+              name: {
+                contains: 'test',
+                mode: 'insensitive'
+              }
+            },
+            {
+              description: {
+                contains: 'test',
+                mode: 'insensitive'
+              }
+            }
+          ]
+        }
+      })
+      expect(res.status).toHaveBeenCalledWith(200)
+      expect(res.json).toHaveBeenCalledWith([mockCategory])
+    })
+  })
+
   describe('createCategory', () => {
     it('should create a product category', async () => {
       req.body = { name: 'test', description: 'test' }
@@ -75,7 +102,7 @@ describe('ProductsController', () => {
 
   describe('updateCategory', () => {
     it('should update a product category', async () => {
-      const mockUpdatedCategory: Category = {
+      const mockUpdatedCategory = {
         ...mockCategory,
         name: 'updated',
         description: 'updated'
@@ -92,43 +119,54 @@ describe('ProductsController', () => {
   describe('deleteCategory', () => {
     it('should delete a product category', async () => {
       req.params = { id: '1' }
-      context.prisma.category.delete.mockResolvedValue(mockCategory)
+
+      context.prisma.productCategory.deleteMany.mockResolvedValue({} as any)
+      context.prisma.category.delete.mockResolvedValue({} as any)
       await deleteCategory(req, res, context)
+
+      expect(context.prisma.productCategory.deleteMany).toHaveBeenCalledWith({
+        where: { categoryId: 1 }
+      })
+      expect(context.prisma.category.delete).toHaveBeenCalledWith({
+        where: { id: 1 }
+      })
       expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith(mockCategory)
     })
   })
 
   describe('getProducts', () => {
     const include = {
-      ProductCategories: {
+      productCategories: {
         include: {
-          Category: true
+          category: true
         }
       },
-      ProductComponents: {
+      productComponents: {
         include: {
-          Child: true
+          child: true
         }
       }
     }
 
     it('should return parsed products with default pagination', async () => {
       req = mockRequest({ limit: '1', page: '2' })
-      context.prisma.product.findMany.mockResolvedValue([
-        mockProductsArray[1],
-        mockProductsArray[2]
+      context.prisma.$transaction.mockResolvedValue([
+        2,
+        [mockProductsArray[1], mockProductsArray[2]]
       ])
       await getProducts(req, res, context)
       expect(context.prisma.product.findMany).toHaveBeenCalledWith({
         take: 2,
         skip: 1,
-        where: {},
+        where: {
+          active: true
+        },
         include
       })
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith({
         data: [mockProductsParsedArray[1]],
+        total: 2,
         nextPage: 3,
         prevPage: 1
       })
@@ -136,17 +174,40 @@ describe('ProductsController', () => {
 
     it('should return parsed products with search', async () => {
       req = mockRequest({ limit: '1', page: '1', search: 'Product 1' })
-      context.prisma.product.findMany.mockResolvedValue([mockProductsArray[0]])
+      context.prisma.$transaction.mockResolvedValue([1, [mockProductsArray[0]]])
       await getProducts(req, res, context)
       expect(context.prisma.product.findMany).toHaveBeenCalledWith({
         take: 2,
         skip: 0,
-        where: { name: { contains: 'Product 1' } },
+        where: {
+          active: true,
+          OR: [
+            {
+              name: {
+                contains: 'Product 1',
+                mode: 'insensitive'
+              }
+            },
+            {
+              description: {
+                contains: 'Product 1',
+                mode: 'insensitive'
+              }
+            },
+            {
+              reference: {
+                contains: 'Product 1',
+                mode: 'insensitive'
+              }
+            }
+          ]
+        },
         include
       })
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith({
         data: [mockProductsParsedArray[0]],
+        total: 1,
         nextPage: null,
         prevPage: null
       })
@@ -154,13 +215,14 @@ describe('ProductsController', () => {
 
     it('should return parsed products with category', async () => {
       req = mockRequest({ limit: '1', page: '1', category: '1' })
-      context.prisma.product.findMany.mockResolvedValue([mockProductsArray[2]])
+      context.prisma.$transaction.mockResolvedValue([1, [mockProductsArray[2]]])
       await getProducts(req, res, context)
       expect(context.prisma.product.findMany).toHaveBeenCalledWith({
         take: 2,
         skip: 0,
         where: {
-          ProductCategories: {
+          active: true,
+          productCategories: {
             some: {
               categoryId: 1
             }
@@ -171,51 +233,30 @@ describe('ProductsController', () => {
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith({
         data: [mockProductsParsedArray[2]],
+        total: 1,
         nextPage: null,
         prevPage: null
       })
     })
 
-    it('should throw a 404 if no products are found', async () => {
-      req = mockRequest({ limit: '1', page: '1' })
-      context.prisma.product.findMany.mockResolvedValue([])
-      await getProducts(req, res, context).catch(err => {
-        expect(err).toEqual(new RequestError(404, 'Not found'))
-      })
-    })
-  })
-
-  describe('getProduct', () => {
-    const include = {
-      ProductCategories: {
-        include: {
-          Category: true
-        }
-      },
-      ProductComponents: {
-        include: {
-          Child: true
-        }
-      }
-    }
-
-    it('should return a parsed product', async () => {
-      req.params = { id: '6' }
-      context.prisma.product.findUnique.mockResolvedValue(mockProductsArray[1])
-      await getProduct(req, res, context)
-      expect(context.prisma.product.findUnique).toHaveBeenCalledWith({
-        where: { id: 6 },
+    it('should return parsed products with inactive filter', async () => {
+      req = mockRequest({ limit: '1', page: '1', inactive: 'true' })
+      context.prisma.$transaction.mockResolvedValue([1, [mockProductsArray[2]]])
+      await getProducts(req, res, context)
+      expect(context.prisma.product.findMany).toHaveBeenCalledWith({
+        take: 2,
+        skip: 0,
+        where: {
+          active: false
+        },
         include
       })
       expect(res.status).toHaveBeenCalledWith(200)
-      expect(res.json).toHaveBeenCalledWith(mockProductsParsedArray[1])
-    })
-
-    it('should throw a 404 if product is not found', async () => {
-      req.params = { id: '1' }
-      context.prisma.product.findUnique.mockResolvedValue(null)
-      await getProduct(req, res, context).catch(err => {
-        expect(err).toEqual(new RequestError(404, 'Not found'))
+      expect(res.json).toHaveBeenCalledWith({
+        data: [mockProductsParsedArray[2]],
+        total: 1,
+        nextPage: null,
+        prevPage: null
       })
     })
   })
@@ -290,17 +331,39 @@ describe('ProductsController', () => {
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(mockProductsParsedArray[0])
     })
+    it('should throw an error if product is a component of itself', async () => {
+      req.params = { id: '7' }
+      req.body = {
+        components: [{ productId: 7, quantity: 5 }]
+      }
+      await updateProduct(req, res, context).catch(err => {
+        expect(err).toEqual(
+          new RequestError(400, 'Product cannot be a component of itself')
+        )
+      })
+    })
   })
 
-  it('should throw an error if product is a component of itself', async () => {
-    req.params = { id: '7' }
-    req.body = {
-      components: [{ productId: 7, quantity: 5 }]
-    }
-    await updateProduct(req, res, context).catch(err => {
-      expect(err).toEqual(
-        new RequestError(400, 'Product cannot be a component of itself')
-      )
+  describe('deleteProduct', () => {
+    it('should delete a product', async () => {
+      req.params = { id: '7' }
+      context.prisma.product.delete.mockResolvedValue({} as any)
+      context.prisma.productCategory.deleteMany.mockResolvedValue({} as any)
+      context.prisma.productComponent.deleteMany.mockResolvedValue({} as any)
+      await deleteProduct(req, res, context)
+      expect(context.prisma.productCategory.deleteMany).toHaveBeenCalledWith({
+        where: { productId: 7 }
+      })
+      expect(context.prisma.productComponent.deleteMany).toHaveBeenCalledWith({
+        where: { parentId: 7 }
+      })
+      expect(context.prisma.productComponent.deleteMany).toHaveBeenCalledWith({
+        where: { childId: 7 }
+      })
+      expect(context.prisma.product.delete).toHaveBeenCalledWith({
+        where: { id: 7 }
+      })
+      expect(res.status).toHaveBeenCalledWith(200)
     })
   })
 })

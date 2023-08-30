@@ -3,13 +3,10 @@ import {
   updateConfigurations
 } from '@controllers/config.controller'
 import { RequestError } from '@exceptions/RequestError'
-import {
-  ConfigurationKeys,
-  ConfigurationValueTypes
-} from '@models/config.model'
+import { ConfigurationKey, ConfigurationValueTypes } from '@models/config.model'
 import { parseConfigurationArray } from '@utils/config'
 import { createMockContext, type MockContext } from '@utils/context'
-import { type NextFunction, type Request, type Response } from 'express'
+import { type Request, type Response } from 'express'
 
 describe('ConfigController', () => {
   let context: MockContext
@@ -48,9 +45,14 @@ describe('ConfigController', () => {
 
   const mockConfig = [
     {
-      key: ConfigurationKeys.REGISTER_ENABLED,
+      key: ConfigurationKey.REGISTER_ENABLED,
       type: ConfigurationValueTypes.BOOLEAN,
       value: 'true'
+    },
+    {
+      key: ConfigurationKey.WORKER_AUTO_TIMEOUT,
+      type: ConfigurationValueTypes.NUMBER,
+      value: '1000'
     }
   ]
 
@@ -58,9 +60,9 @@ describe('ConfigController', () => {
 
   describe('getConfigurations', () => {
     it('should return configurations', async () => {
-      context.prisma.config.findMany.mockResolvedValue(mockConfig)
+      context.prisma.appConfig.findMany.mockResolvedValue(mockConfig)
       await getConfigurations(req, res, context)
-      expect(context.prisma.config.findMany).toHaveBeenCalled()
+      expect(context.prisma.appConfig.findMany).toHaveBeenCalled()
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(parsedMockConfig)
     })
@@ -68,27 +70,35 @@ describe('ConfigController', () => {
 
   describe('updateConfigurations', () => {
     it('should update configuration', async () => {
-      context.prisma.config.update.mockResolvedValueOnce(mockConfig[0])
+      context.prisma.appConfig.update.mockResolvedValue(mockConfig as any)
       req.body = {
-        key: ConfigurationKeys.REGISTER_ENABLED,
-        value: false
+        registerEnabled: false,
+        workerAutoTimeout: 1000
       }
+      context.prisma.appConfig.findMany.mockResolvedValue(mockConfig)
       await updateConfigurations(req, res, context)
-      expect(context.prisma.config.update).toHaveBeenCalled()
+      expect(context.prisma.appConfig.update).toHaveBeenCalledWith({
+        where: { key: ConfigurationKey.REGISTER_ENABLED },
+        data: { value: 'false' }
+      })
+      expect(context.prisma.appConfig.update).toHaveBeenCalledWith({
+        where: { key: ConfigurationKey.WORKER_AUTO_TIMEOUT },
+        data: { value: '1000' }
+      })
       expect(res.status).toHaveBeenCalledWith(200)
       expect(res.json).toHaveBeenCalledWith(parsedMockConfig)
     })
 
-    it('should throw a 400 if key is invalid', async () => {
+    it('should throw error if configuration key is not found', async () => {
+      context.prisma.appConfig.update.mockResolvedValueOnce(mockConfig as any)
       req.body = {
-        key: 'INVALID_KEY',
-        value: false
+        registerEnabled: false,
+        workerAutoTimeout: 1000,
+        notFoundKey: 'value'
       }
-      await updateConfigurations(req, res, context).catch(err => {
-        expect(err).toBeInstanceOf(RequestError)
-        expect(err.statusCode).toBe(400)
-        expect(err.message).toBe('Invalid configuration key')
-      })
+      await expect(
+        updateConfigurations(req, res, context)
+      ).rejects.toThrowError(RequestError)
     })
   })
 })

@@ -1,0 +1,33 @@
+put:
+  operationId: updateUser
+  security:
+    - {}
+  tags:
+    - Users
+  summary: Update a user
+  parameters:
+    - in: path
+      name: id
+      schema:
+        type: integer
+      required: true
+      description: User ID
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/UserUpdateRequest.yaml
+  responses:
+    '200':
+      description: User updated
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/UserResponse.yaml
+    '400':
+      description: Invalid input
+    '404':
+      description: User not found
+    '500':
+      description: Internal server error

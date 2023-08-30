@@ -1,0 +1,54 @@
+put:
+  operationId: updateTask
+  security:
+    - {}
+  tags:
+    - Tasks
+  summary: Update a task by ID
+  parameters:
+    - name: taskId
+      in: path
+      required: true
+      schema:
+        type: integer
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/TaskCreationRequest.yaml
+  responses:
+    '200':
+      description: Task updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: ../components/schemas/TaskResponse.yaml
+    '400':
+      description: Invalid task ID
+    '404':
+      description: Not found
+    '500':
+      description: Internal server error'
+delete:
+  operationId: deleteTask
+  security:
+    - {}
+  tags:
+    - Tasks
+  summary: Delete a task by ID
+  parameters:
+    - name: taskId
+      in: path
+      required: true
+      schema:
+        type: integer
+  responses:
+    '204':
+      description: Task deleted successfully
+    '400':
+      description: Invalid task ID
+    '404':
+      description: Not found
+    '500':
+      description: Internal server error

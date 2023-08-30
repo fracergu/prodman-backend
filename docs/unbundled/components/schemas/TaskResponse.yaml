@@ -1,0 +1,35 @@
+type: object
+properties:
+  id:
+    type: integer
+    example: 1
+  percentageCompleted:
+    type: number
+    example: 0.5
+  user:
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1
+      name:
+        type: string
+        example: John
+      lastName:
+        type: string
+        example: Doe
+  createdAt:
+    type: string
+    format: date-time
+    example: '2021-01-01T00:00:00.000Z'
+  updatedAt:
+    type: string
+    format: date-time
+    example: '2021-01-01T00:00:00.000Z'
+  notes:
+    type: string
+    example: Some notes
+  subtasks:
+    type: array
+    items:
+      $ref: ./Subtask.yaml

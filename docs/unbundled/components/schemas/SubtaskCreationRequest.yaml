@@ -1,0 +1,15 @@
+type: object
+properties:
+  productId:
+    type: integer
+    example: 1
+  quantity:
+    type: integer
+    example: 1
+  status:
+    type: string
+    enum:
+      - pending
+      - completed
+      - cancelled
+    example: pending

@@ -12,7 +12,18 @@ export const getCategories = async (
   res: Response,
   ctx: Context
 ): Promise<void> => {
-  const categories = await ctx.prisma.category.findMany()
+  const search = req.query.search as string
+  const whereCriteria: any = {}
+
+  if (isValidString(search)) {
+    whereCriteria.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } }
+    ]
+  }
+  const categories = await ctx.prisma.category.findMany({
+    where: whereCriteria
+  })
   res.status(200).json(categories)
 }
 
@@ -56,26 +67,29 @@ export const deleteCategory = async (
   ctx: Context
 ): Promise<void> => {
   const { id } = req.params
-  const category = await ctx.prisma.category.delete({
+  await ctx.prisma.productCategory.deleteMany({
+    where: { categoryId: parseInt(id) }
+  })
+  await ctx.prisma.category.delete({
     where: { id: parseInt(id) }
   })
-  res.status(200).json(category)
+  res.status(200).send()
 }
 
 function _parseProductToView(product: any) {
   return {
     ...product,
-    categories: product.ProductCategories.map(
-      (pc: { Category: any }) => pc.Category
+    categories: product.productCategories.map(
+      (pc: { category: any }) => pc.category
     ),
-    components: product.ProductComponents.map(
-      (pc: { quantity: any; Child: any }) => ({
+    components: product.productComponents.map(
+      (pc: { quantity: any; child: any }) => ({
         quantity: pc.quantity,
-        product: pc.Child
+        product: pc.child
       })
     ),
-    ProductCategories: undefined,
-    ProductComponents: undefined
+    productCategories: undefined,
+    productComponents: undefined
   }
 }
 
@@ -88,42 +102,51 @@ export const getProducts = async (
   const page = getIntegerParam(req.query.page as string, 0)
   const search = req.query.search as string
   const category = req.query.category as string
+  const inactive = req.query.inactive as string
 
   const whereCriteria: any = {}
   if (isValidString(search)) {
-    whereCriteria.name = { contains: search }
+    whereCriteria.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+      { reference: { contains: search, mode: 'insensitive' } }
+    ]
   }
   if (isValidString(category)) {
-    whereCriteria.ProductCategories = {
+    whereCriteria.productCategories = {
       some: {
         categoryId: parseInt(category)
       }
     }
   }
+  if (isValidString(inactive)) {
+    whereCriteria.active = !(inactive === 'true')
+  } else {
+    whereCriteria.active = true
+  }
 
   const include = {
-    ProductCategories: {
+    productCategories: {
       include: {
-        Category: true
+        category: true
       }
     },
-    ProductComponents: {
+    productComponents: {
       include: {
-        Child: true
+        child: true
       }
     }
   }
 
-  const products = await ctx.prisma.product.findMany({
-    take: limit + 1,
-    skip: (page - 1) * limit,
-    include,
-    where: whereCriteria
-  })
-
-  if (products.length === 0) {
-    throw new RequestError(404, 'Not found')
-  }
+  const [count, products] = await ctx.prisma.$transaction([
+    ctx.prisma.product.count({ where: whereCriteria }),
+    ctx.prisma.product.findMany({
+      take: limit + 1,
+      skip: (page - 1) * limit,
+      include,
+      where: whereCriteria
+    })
+  ])
 
   const hasNextPage = products.length > limit
   if (hasNextPage) {
@@ -134,38 +157,10 @@ export const getProducts = async (
 
   res.status(200).json({
     data: transformedProducts,
+    total: count,
     nextPage: hasNextPage ? page + 1 : null,
     prevPage: page > 1 ? page - 1 : null
   })
-}
-
-export const getProduct = async (
-  req: Request,
-  res: Response,
-  ctx: Context
-): Promise<void> => {
-  const { id } = req.params
-  const product = await ctx.prisma.product.findUnique({
-    where: { id: parseInt(id) },
-    include: {
-      ProductCategories: {
-        include: {
-          Category: true
-        }
-      },
-      ProductComponents: {
-        include: {
-          Child: true
-        }
-      }
-    }
-  })
-
-  if (product == null) {
-    throw new RequestError(404, 'Not found')
-  }
-
-  res.status(200).json(_parseProductToView(product))
 }
 
 export const createProduct = async (
@@ -178,15 +173,15 @@ export const createProduct = async (
 
   const productCategories =
     categories !== undefined
-      ? categories.map(categoryId => ({
-          category: categoryId
+      ? categories.map(c => ({
+          categoryId: c
         }))
       : undefined
 
   const productComponents =
     components !== undefined
       ? components.map(component => ({
-          childProduct: component.productId,
+          childId: component.productId,
           quantity: component.quantity
         }))
       : undefined
@@ -199,13 +194,13 @@ export const createProduct = async (
   }
 
   if (productCategories != null) {
-    productData.ProductCategories = {
+    productData.productCategories = {
       create: productCategories
     }
   }
 
   if (productComponents != null) {
-    productData.ProductComponents = {
+    productData.productComponents = {
       create: productComponents
     }
   }
@@ -213,14 +208,14 @@ export const createProduct = async (
   const product = await ctx.prisma.product.create({
     data: productData,
     include: {
-      ProductCategories: {
+      productCategories: {
         include: {
-          Category: true
+          category: true
         }
       },
-      ProductComponents: {
+      productComponents: {
         include: {
-          Child: true
+          child: true
         }
       }
     }
@@ -253,8 +248,8 @@ export const updateProduct = async (
     })
 
     if (categories !== null) {
-      productData.ProductCategories = {
-        create: categories.map(categoryId => ({ category: categoryId }))
+      productData.productCategories = {
+        create: categories.map(categoryId => ({ categoryId }))
       }
     }
   }
@@ -269,9 +264,9 @@ export const updateProduct = async (
     })
 
     if (components !== null) {
-      productData.ProductComponents = {
+      productData.productComponents = {
         create: components.map(component => ({
-          childProduct: component.productId,
+          childId: component.productId,
           quantity: component.quantity
         }))
       }
@@ -282,18 +277,41 @@ export const updateProduct = async (
     where: { id: productId },
     data: productData,
     include: {
-      ProductCategories: {
+      productCategories: {
         include: {
-          Category: true
+          category: true
         }
       },
-      ProductComponents: {
+      productComponents: {
         include: {
-          Child: true
+          child: true
         }
       }
     }
   })
 
   res.status(200).json(_parseProductToView(product))
+}
+
+export const deleteProduct = async (
+  req: Request,
+  res: Response,
+  ctx: Context
+): Promise<void> => {
+  const { id } = req.params
+  const productId = parseInt(id)
+
+  await ctx.prisma.productCategory.deleteMany({
+    where: { productId }
+  })
+  await ctx.prisma.productComponent.deleteMany({
+    where: { parentId: productId }
+  })
+  await ctx.prisma.productComponent.deleteMany({
+    where: { childId: productId }
+  })
+  await ctx.prisma.product.delete({
+    where: { id: productId }
+  })
+  res.status(200).send()
 }
