@@ -135,6 +135,10 @@ components:
           type: string
           description: The user's role
           example: admin
+        active:
+          type: boolean
+          description: Whether the user is active or not
+          example: true
     UserUpdateRequest:
       type: object
       properties:
@@ -304,6 +308,10 @@ components:
           type: string
           description: The product's reference
           example: REF-001
+        image:
+          type: string
+          description: The product's image
+          example: https://example.com/image.png
         active:
           type: boolean
           description: The product's active status
@@ -338,8 +346,6 @@ components:
       properties:
         id:
           type: integer
-        completed:
-          type: boolean
         product:
           type: object
           properties:
@@ -1119,7 +1125,7 @@ paths:
           required: false
           schema:
             type: string
-        - name: completed
+        - name: status
           in: query
           required: false
           schema:
